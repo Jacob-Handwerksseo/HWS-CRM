@@ -32,9 +32,9 @@ export function Sidebar() {
     <div className="w-64 border-r bg-card/50 backdrop-blur-sm hidden md:flex flex-col h-full">
       <div className="h-24 flex items-center px-6 border-b border-border/50 py-3">
         <Link href="/">
-          <div className="flex flex-col items-center gap-1 cursor-pointer w-full">
-            <img src={logoUrl} alt="HANDWERKS SEO" className="w-48 object-contain" />
-            <span className="font-medium text-xs text-muted-foreground tracking-widest text-center leading-tight">| CRM |</span>
+          <div className="flex items-center gap-2 cursor-pointer w-full justify-center">
+            <img src={logoUrl} alt="HANDWERKS SEO" className="w-36 object-contain" />
+            <span className="font-black text-xl text-[#4a4a4a] tracking-wider mt-1">CRM</span>
           </div>
         </Link>
       </div>
