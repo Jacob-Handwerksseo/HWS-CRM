@@ -13,8 +13,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
         <CardHeader className="text-center space-y-2 pb-8">
-          <img src={logoUrl} alt="HWS-CRM Logo" className="mx-auto w-16 h-16 object-contain mb-2" />
-          <CardTitle className="text-3xl font-bold tracking-tight">HWS-CRM</CardTitle>
+          <img src={logoUrl} alt="HANDWERKS SEO | CRM Logo" className="mx-auto w-16 h-16 object-contain mb-2" />
+          <CardTitle className="text-3xl font-bold tracking-tight">HANDWERKS SEO | CRM</CardTitle>
           <CardDescription>
             Wähle einen Test-User, um den Prototyp zu starten.
           </CardDescription>
