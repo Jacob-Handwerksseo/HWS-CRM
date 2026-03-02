@@ -75,16 +75,32 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
         {/* Header Section */}
         <div className="px-6 py-5 border-b bg-background/50 backdrop-blur sticky top-0 z-10">
           <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <Badge variant="outline" className={statusColors[lead.status] || ""}>
                   {lead.status}
                 </Badge>
                 <Badge variant="outline" className="text-xs font-normal">
                   {lead.source}
                 </Badge>
+                
+                {assignedUser && (
+                  <div className="flex items-center gap-1.5 ml-2 bg-muted/50 px-2 py-0.5 rounded-full border text-xs">
+                    <Avatar className="w-4 h-4">
+                      <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                        {assignedUser.avatar}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-muted-foreground">{assignedUser.name}</span>
+                  </div>
+                )}
               </div>
-              <SheetTitle className="text-2xl font-bold">{lead.name}</SheetTitle>
+              <SheetTitle className="text-2xl font-bold mb-1">{lead.name}</SheetTitle>
+              {lead.role && (
+                <div className="text-sm text-muted-foreground mb-1.5 font-medium">
+                  {lead.role}
+                </div>
+              )}
               <div className="text-muted-foreground flex items-center gap-1.5 text-sm mt-1">
                 <Building2 className="w-4 h-4" />
                 {lead.company}
@@ -146,9 +162,9 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
           <div className="p-6 space-y-8 pb-20">
             
             {/* Quick Info Grid */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-8">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <UserCircle2 className="w-3.5 h-3.5" /> Zuständig
                 </label>
                 <InlineEdit 
@@ -158,7 +174,6 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                   isEditingMode={isEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
                 />
-                {/* Visual representation when not editing */}
                 {!isEditingMode && (
                   <div className="flex items-center gap-2 mt-1 absolute -translate-y-9 pointer-events-none bg-card px-1">
                     {assignedUser ? (
@@ -178,7 +193,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Calendar className="w-3.5 h-3.5" /> Status
                 </label>
                 <InlineEdit 
@@ -191,7 +206,40 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <UserCircle2 className="w-3.5 h-3.5" /> Rolle / Position
+                </label>
+                <InlineEdit 
+                  value={lead.role || ""}
+                  isEditingMode={isEditingMode}
+                  onSave={(val) => updateLeadField(lead.id, "role", val)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <UserCircle2 className="w-3.5 h-3.5" /> Ansprechpartner
+                </label>
+                <InlineEdit 
+                  value={lead.name}
+                  isEditingMode={isEditingMode}
+                  onSave={(val) => updateLeadField(lead.id, "name", val)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <Building2 className="w-3.5 h-3.5" /> Unternehmen
+                </label>
+                <InlineEdit 
+                  value={lead.company}
+                  isEditingMode={isEditingMode}
+                  onSave={(val) => updateLeadField(lead.id, "company", val)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Mail className="w-3.5 h-3.5" /> E-Mail
                 </label>
                 <InlineEdit 
@@ -203,7 +251,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Phone className="w-3.5 h-3.5" /> Telefon
                 </label>
                 <InlineEdit 
@@ -215,7 +263,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Globe className="w-3.5 h-3.5" /> Website
                 </label>
                 <InlineEdit 
@@ -227,7 +275,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <MapPin className="w-3.5 h-3.5" /> Adresse
                 </label>
                 <InlineEdit 

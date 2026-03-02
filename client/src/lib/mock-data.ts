@@ -26,6 +26,7 @@ export type Activity = {
 export type Lead = {
   id: string;
   name: string;
+  role?: string;
   company: string;
   status: LeadStatus;
   source: LeadSource;
@@ -47,6 +48,7 @@ export const MOCK_LEADS: Lead[] = [
   {
     id: "lead_1",
     name: "Thomas Müller",
+    role: "Geschäftsführer",
     company: "TechNova GmbH",
     status: "Neu",
     source: "Google Ads",
@@ -66,6 +68,7 @@ export const MOCK_LEADS: Lead[] = [
   {
     id: "lead_2",
     name: "Sarah Becker",
+    role: "Marketing Leitung",
     company: "WebSolutions AG",
     status: "Kontaktiert",
     source: "Tool-Import",
@@ -86,6 +89,7 @@ export const MOCK_LEADS: Lead[] = [
   {
     id: "lead_3",
     name: "Michael Kraft",
+    role: "Inhaber",
     company: "Kraft & Söhne",
     status: "Neu",
     source: "Manuell",
