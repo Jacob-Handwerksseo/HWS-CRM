@@ -74,7 +74,7 @@ export function InlineEdit({ value, onSave, isEditingMode, type = "text", option
     <div className="flex items-start gap-2 -mx-2 px-2 py-1 bg-muted/30 rounded-md z-10 relative">
       <div className="flex-1">
         {type === "select" ? (
-          <Select value={currentValue} onValueChange={setCurrentValue} open>
+          <Select value={currentValue} onValueChange={setCurrentValue} defaultOpen>
             <SelectTrigger className="h-8 text-sm bg-background border-border shadow-sm">
               <SelectValue placeholder="Auswählen..." />
             </SelectTrigger>
