@@ -30,11 +30,14 @@ export function Sidebar() {
 
   return (
     <div className="w-64 border-r bg-card/50 backdrop-blur-sm hidden md:flex flex-col h-full">
-      <div className="h-16 flex items-center px-6 border-b border-border/50">
+      <div className="h-20 flex items-center px-6 border-b border-border/50 py-3">
         <Link href="/">
-          <div className="flex items-center gap-2 font-bold text-lg tracking-tight text-primary cursor-pointer">
-            <img src={logoUrl} alt="HANDWERKS SEO | CRM" className="w-8 h-8 object-contain" />
-            HANDWERKS SEO
+          <div className="flex items-center gap-3 cursor-pointer">
+            <img src={logoUrl} alt="HANDWERKS SEO | CRM" className="w-10 h-10 object-contain" />
+            <div className="flex flex-col">
+              <span className="font-bold text-sm tracking-tight text-primary leading-tight">HANDWERKS SEO</span>
+              <span className="font-medium text-[10px] text-muted-foreground tracking-widest text-center leading-tight mt-0.5">| CRM |</span>
+            </div>
           </div>
         </Link>
       </div>
