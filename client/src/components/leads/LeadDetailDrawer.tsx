@@ -12,6 +12,7 @@ import { useAppState } from "@/lib/app-state";
 import { USERS, LeadStatus, LeadSource } from "@/lib/mock-data";
 import { InlineEdit } from "./InlineEdit";
 import { ActivityFeed } from "./ActivityFeed";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Building2, Mail, Phone, Globe, MapPin, 
   UserCircle2, Calendar, Edit3, Trash2
