@@ -1,0 +1,89 @@
+Du bist Product Designer + Frontend-Architekt. Baue einen klickbaren, modernen CRM-Prototypen (UI/UX) als Web-App (responsive, clean, „modern SaaS CRM“-Look). Fokus: Design, Informationsarchitektur, Zustände, Komponenten, Interaktionen (ohne echte Datenbank/Backend; nutze Mock-Daten + Local State). Keine „alles neu eingeben“-Formulare: Inline-Editing pro Feld ist Pflicht.
+
+APP-STRUKTUR
+- Zwei Hauptbereiche im linken Sidebar-Menü:
+  1) Sales
+  2) Kunden
+- Global: Topbar mit Suche, „Neuer Lead“, User-Menü (User A / User B), und ggf. Filter-Quickchips.
+
+SALES > LEADS (Kernbereich)
+1) Lead-Übersicht als Tabelle/Liste (modern, sticky header, sortierbar, filterbar)
+   - Spalten: Name/Firma, Status, Leadquelle, Zugewiesen an (User A/B/Unassigned), Letzter Kontakt, Nächstes Follow-up, Telefon, E-Mail, Erstellt am
+   - Row click öffnet Lead-Detail-Drawer (rechts) oder Detailseite.
+   - Jeder Lead hat ein „⋯“-Menü mit Aktionen:
+     - Bearbeiten (öffnet NICHT ein Vollformular; aktiviert Bearbeitungsmodus)
+     - Entfernen (öffnet Bestätigungs-Dialog mit Warntext: unwiderruflich löschen; Buttons: Abbrechen / Ja, löschen)
+
+2) Leadquellen-Sichten (separate Listen/Filter, als Tabs oder Saved Views):
+   - Alle Leads
+   - Google Ads Leads
+   - Tool-Import Leads
+   - Manuell angelegte Leads
+   (Später erweiterbar)
+   -> Jede Sicht zeigt dieselbe Tabelle, aber mit aktivem Filter + Badge.
+
+3) Lead anlegen (UI)
+   - Button „Neuer Lead“ öffnet Modal/Drawer mit minimalen Pflichtfeldern.
+   - Quelle auswählbar: Google Ads / Tool-Import / Manuell
+   - Zugewiesen an: Unassigned / User A / User B
+
+LEAD-DETAIL (sehr wichtig)
+- Oben: Lead-Header (Name/Firma, Status, Quelle, Owner/Zuweisung, Quick Actions)
+- Globaler Button „Bearbeitungsmodus aktivieren“ (Toggle)
+  - Standard: Read-only Ansicht.
+  - Wenn aktiv: Jedes Feld zeigt ein Stift-Icon; einzelne Felder werden inline editierbar (z.B. Klick auf Stift -> Input erscheint mit bestehendem Wert).
+  - Pro Feld: Speichern/Abbrechen nur für dieses Feld (nicht global alles bestätigen).
+  - Beispiele Felder: Telefon, E-Mail, Adresse, Website, Notizen, Status, Follow-up-Datum, Quelle (read-only wenn Quelle systemgesetzt? -> im Prototyp als Regel darstellen), Zuweisung.
+
+DOKUMENTATION / „CHAT“-TIMELINE (unterhalb im Lead-Detail)
+- Timeline wie Chat/Activity Feed:
+  - Einträge: Text, Zeitstempel (Datum + Uhrzeit), Autor (User A oder User B)
+  - Neues Kommentar-Feld unten: „Kommentar hinzufügen…“ + Button „Speichern“
+  - Kommentare editierbar:
+    - Stift-Icon pro Kommentar -> Text wird im selben Feld editierbar (bestehender Text bleibt stehen) + Speichern/Abbrechen
+  - Optional: „Bearbeitet“-Hinweis nach Edit + Updated Timestamp
+- Sichtbar machen: wer hat was gemacht (Autor-Badge/Avatar + Name).
+
+BENUTZER / LOGIN (als UI-Flow im Prototyp)
+- Erstelle einen Login-Screen (Mock-Auth):
+  - Zwei User-Accounts: User A und User B
+  - Nach Login: App lädt mit aktivem User, der in Topbar sichtbar ist.
+- Rollen/Rechte: beide Admin-gleich (alles erlaubt)
+- Alle Aktionen (Lead erstellt/editiert/Kommentar erstellt/editiert/gelöscht) tragen den aktiven User als „Actor“ im UI (z.B. im Activity Feed oder Metadaten).
+
+Zuweisung & persönliche Listen
+- In Sales: zusätzliche Saved Views/Filter:
+  - „Meine Leads“ (zeigt Leads, die dem aktiven User zugewiesen sind)
+  - „Unassigned“
+  - „User A“
+  - „User B“
+- Im UI klar darstellen, dass Zuweisung zentral ist, um Arbeitslisten je Mitarbeiter zu bauen.
+
+KUNDEN-BEREICH
+- Gleiche Designlogik wie Leads, aber als „Kunden“-Entität (kann initial Dummy sein).
+- Mindestens: Kundenliste + Detailansicht + Dokumentation/Timeline (gleiches Komponenten-Pattern).
+
+IMPORT / INTEGRATIONEN (nur UI vorbereiten, keine echte Implementierung)
+- Bereich/Modal „Import“:
+  - Upload CSV/Excel (UI only)
+  - Mapping-Screen (Spaltenzuordnung) als Mock
+  - Quelle wird automatisch „Tool-Import“
+- Google Ads Integration (UI only):
+  - Settings-Seite „Integrationen“ -> „Google Ads Leads“
+  - Toggle „Aktivieren“ + Hinweis: „Später: Webhook/API – neue Leads landen automatisch in der Sicht Google Ads Leads“
+- Manuell: separate Create-Flow, Quelle „Manuell“.
+
+DESIGNVORGABEN
+- Look & Feel: modernes CRM (Card + Table, viel whitespace, klare Typografie, dezente Borders, Icons).
+- Komponenten: Sidebar, Topbar, Table, Filters, Drawer/Modal, Confirmation Dialog, Inline Edit, Activity Feed.
+- States: Empty State, Loading Skeletons, Error State (UI).
+- Accessibility: klare Fokuszustände, Tastaturbedienbarkeit für Modals/Dialogs.
+
+LIEFERUMFANG (jetzt im Design/Prototyp)
+- Mehrere Screens: Login, Sales/Leads Liste, Lead Detail, Kunden Liste, Kunden Detail, Integrationen/Import Settings.
+- Nutze Mock-Daten (mindestens 15 Leads mit gemischten Quellen und Zuweisungen).
+- Alle Interaktionen klickbar: Filter, Tabs, Zuweisen, Bearbeitungsmodus, Inline-Edit, Kommentar hinzufügen/editieren, Delete-Dialog.
+
+WICHTIG
+- Noch keine echte Datenbank oder echte APIs. Nur UI/State.
+- Code so strukturieren, dass später Backend/DB leicht anschließbar ist (z.B. Services/Repositories als Platzhalter).
