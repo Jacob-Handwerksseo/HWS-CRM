@@ -13,9 +13,9 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
         <CardHeader className="text-center space-y-2 pb-8">
-          <img src={logoUrl} alt="HANDWERKS SEO Logo" className="mx-auto w-48 object-contain mb-2" />
+          <img src={logoUrl} alt="HANDWERKS SEO Logo" className="mx-auto w-80 object-contain mb-2" />
           <div className="flex flex-col items-center">
-            <div className="text-lg font-medium text-muted-foreground mt-1 tracking-widest">| CRM |</div>
+            <div className="text-xl font-medium text-muted-foreground mt-2 tracking-widest">| CRM |</div>
           </div>
           <CardDescription>
             Wähle einen Test-User, um den Prototyp zu starten.
