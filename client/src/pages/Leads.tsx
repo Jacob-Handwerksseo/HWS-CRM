@@ -66,15 +66,30 @@ export default function Leads() {
           <div className="p-4 border-b bg-muted/20 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full lg:w-auto overflow-x-auto">
               <TabsList className="bg-background border shadow-sm">
-                <TabsTrigger value="all">Alle Leads</TabsTrigger>
+                <TabsTrigger value="all" className="flex gap-2">
+                  Alle Leads
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
+                    {leads.length}
+                  </Badge>
+                </TabsTrigger>
                 <TabsTrigger value="google-ads" className="flex gap-2">
                   Google Ads
                   <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
                     {leads.filter(l => l.source === "Google Ads").length}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="import">Tool-Import</TabsTrigger>
-                <TabsTrigger value="manual">Manuell</TabsTrigger>
+                <TabsTrigger value="import" className="flex gap-2">
+                  Tool-Import
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
+                    {leads.filter(l => l.source === "Tool-Import").length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="manual" className="flex gap-2">
+                  Manuell
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
+                    {leads.filter(l => l.source === "Manuell").length}
+                  </Badge>
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
