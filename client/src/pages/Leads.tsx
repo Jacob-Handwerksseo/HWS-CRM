@@ -83,8 +83,8 @@ export default function Leads() {
                 <TabsTrigger value="all">Alle</TabsTrigger>
                 <TabsTrigger value="mine">Meine Leads</TabsTrigger>
                 <TabsTrigger value="unassigned">Nicht zugewiesen</TabsTrigger>
-                <TabsTrigger value="user_a">User A</TabsTrigger>
-                <TabsTrigger value="user_b">User B</TabsTrigger>
+                <TabsTrigger value="user_a">André</TabsTrigger>
+                <TabsTrigger value="user_b">Jacob</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
