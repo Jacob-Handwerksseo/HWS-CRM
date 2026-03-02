@@ -4,7 +4,7 @@ import { USERS } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, User as UserIcon } from "lucide-react";
-import logoUrl from "@assets/Logo_1772444623720.png";
+import logoUrl from "@assets/Logo__1772444817188.png";
 
 export default function Login() {
   const { login } = useAppState();
@@ -13,9 +13,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
         <CardHeader className="text-center space-y-2 pb-8">
-          <img src={logoUrl} alt="HANDWERKS SEO | CRM Logo" className="mx-auto w-16 h-16 object-contain mb-2" />
+          <img src={logoUrl} alt="HANDWERKS SEO Logo" className="mx-auto w-48 object-contain mb-2" />
           <div className="flex flex-col items-center">
-            <CardTitle className="text-3xl font-bold tracking-tight">HANDWERKS SEO</CardTitle>
             <div className="text-lg font-medium text-muted-foreground mt-1 tracking-widest">| CRM |</div>
           </div>
           <CardDescription>

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, Users2, Settings, Import } from "lucide-react";
-import logoUrl from "@assets/Logo_1772444623720.png";
+import logoUrl from "@assets/Logo__1772444817188.png";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -32,12 +32,9 @@ export function Sidebar() {
     <div className="w-64 border-r bg-card/50 backdrop-blur-sm hidden md:flex flex-col h-full">
       <div className="h-20 flex items-center px-6 border-b border-border/50 py-3">
         <Link href="/">
-          <div className="flex items-center gap-3 cursor-pointer">
-            <img src={logoUrl} alt="HANDWERKS SEO | CRM" className="w-10 h-10 object-contain" />
-            <div className="flex flex-col">
-              <span className="font-bold text-sm tracking-tight text-primary leading-tight">HANDWERKS SEO</span>
-              <span className="font-medium text-[10px] text-muted-foreground tracking-widest text-center leading-tight mt-0.5">| CRM |</span>
-            </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer w-full">
+            <img src={logoUrl} alt="HANDWERKS SEO" className="w-40 object-contain" />
+            <span className="font-medium text-[10px] text-muted-foreground tracking-widest text-center leading-tight">| CRM |</span>
           </div>
         </Link>
       </div>
