@@ -7,8 +7,8 @@ export type User = {
 };
 
 export const USERS: User[] = [
-  { id: "user_a", name: "Jacob", avatar: "J" },
-  { id: "user_b", name: "André", avatar: "A" },
+  { id: "user_a", name: "André", avatar: "A" },
+  { id: "user_b", name: "Jacob", avatar: "J" },
 ];
 
 export type LeadStatus = "Neu" | "Kontaktiert" | "Qualifiziert" | "Verhandlung" | "Gewonnen" | "Verloren";
