@@ -47,10 +47,12 @@ export function InlineEdit({ value, onSave, isEditingMode, type = "text", option
     setIsEditing(false);
   };
 
+  const displayValue = type === "select" ? (options.find(o => o.value === value)?.label || value) : value;
+
   if (!isEditingMode) {
     return (
       <div className={cn("py-1.5 min-h-[32px] text-sm", className)}>
-        {value || <span className="text-muted-foreground italic">Leer</span>}
+        {displayValue || <span className="text-muted-foreground italic">Leer</span>}
       </div>
     );
   }
@@ -64,7 +66,7 @@ export function InlineEdit({ value, onSave, isEditingMode, type = "text", option
         )}
         onClick={() => setIsEditing(true)}
       >
-        <span>{value || <span className="text-muted-foreground italic">Leer</span>}</span>
+        <span>{displayValue || <span className="text-muted-foreground italic">Leer</span>}</span>
         <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );

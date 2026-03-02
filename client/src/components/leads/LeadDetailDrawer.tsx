@@ -167,29 +167,26 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <UserCircle2 className="w-3.5 h-3.5" /> Zuständig
                 </label>
-                <InlineEdit 
-                  value={lead.assignedTo ? lead.assignedTo : "unassigned"}
-                  options={userOptions}
-                  type="select"
-                  isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
-                />
-                {!isEditingMode && (
-                  <div className="flex items-center gap-2 mt-1 absolute -translate-y-9 pointer-events-none bg-card px-1">
-                    {assignedUser ? (
-                      <>
-                        <Avatar className="w-5 h-5">
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                            {assignedUser.avatar}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{assignedUser.name}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-muted-foreground italic">Nicht zugewiesen</span>
-                    )}
-                  </div>
-                )}
+                <div className="relative">
+                  <InlineEdit 
+                    value={lead.assignedTo ? lead.assignedTo : "unassigned"}
+                    options={userOptions}
+                    type="select"
+                    isEditingMode={isEditingMode}
+                    onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
+                    className={!isEditingMode && assignedUser ? "text-transparent select-none" : ""}
+                  />
+                  {!isEditingMode && assignedUser && (
+                    <div className="flex items-center gap-2 absolute top-1.5 left-0 pointer-events-none">
+                      <Avatar className="w-5 h-5">
+                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                          {assignedUser.avatar}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{assignedUser.name}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">
