@@ -1,0 +1,44 @@
+import { useState } from "react";
+import { useAppState } from "@/lib/app-state";
+import { USERS } from "@/lib/mock-data";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, User as UserIcon } from "lucide-react";
+
+export default function Login() {
+  const { login } = useAppState();
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
+        <CardHeader className="text-center space-y-2 pb-8">
+          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <Users className="w-6 h-6 text-primary" />
+          </div>
+          <CardTitle className="text-3xl font-bold tracking-tight">Nexus CRM</CardTitle>
+          <CardDescription>
+            Wähle einen Test-User, um den Prototyp zu starten.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {USERS.map((user) => (
+            <Button
+              key={user.id}
+              variant="outline"
+              className="w-full h-16 text-lg justify-start px-6 bg-card hover:bg-accent hover:text-accent-foreground border-border/50 transition-all hover:scale-[1.02]"
+              onClick={() => login(user.id)}
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-4 font-semibold">
+                {user.avatar}
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="font-semibold">{user.name}</span>
+                <span className="text-xs text-muted-foreground font-normal">Admin Rolle</span>
+              </div>
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
