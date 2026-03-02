@@ -12,11 +12,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
-        <CardHeader className="text-center space-y-2 pb-8 pt-4">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <img src={logoUrl} alt="HANDWERKS SEO Logo" className="w-64 object-contain" />
-            <span className="text-4xl font-black text-[#4a4a4a] tracking-wider mt-1">CRM</span>
-          </div>
+        <CardHeader className="text-center pb-8 pt-8 flex flex-col items-center">
+          <img src={logoUrl} alt="HANDWERKS SEO Logo" className="w-72 object-contain mb-5" />
+          <div className="text-2xl font-black text-[#4a4a4a] tracking-widest mb-5">| CRM |</div>
           <CardDescription>
             Wähle einen Test-User, um den Prototyp zu starten.
           </CardDescription>
