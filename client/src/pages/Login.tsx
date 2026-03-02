@@ -15,7 +15,7 @@ export default function Login() {
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
             <Users className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight">Nexus CRM</CardTitle>
+          <CardTitle className="text-3xl font-bold tracking-tight">HWS-CRM</CardTitle>
           <CardDescription>
             Wähle einen Test-User, um den Prototyp zu starten.
           </CardDescription>

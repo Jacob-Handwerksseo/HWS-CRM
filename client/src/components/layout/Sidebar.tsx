@@ -33,9 +33,9 @@ export function Sidebar() {
         <Link href="/">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary cursor-pointer">
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-              N
+              H
             </div>
-            NEXUS
+            HWS
           </div>
         </Link>
       </div>

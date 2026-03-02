@@ -40,7 +40,7 @@ export default function Integrations() {
             <CardContent>
               <p className="text-sm text-foreground/80 mb-4">
                 Verbinden Sie Ihr Google Ads Konto, um Leads aus Ihren Lead-Formular-Erweiterungen 
-                direkt in Nexus CRM zu importieren. Neue Leads erhalten automatisch die Quelle "Google Ads".
+                direkt in HWS-CRM zu importieren. Neue Leads erhalten automatisch die Quelle "Google Ads".
               </p>
               
               {googleAdsEnabled && (
