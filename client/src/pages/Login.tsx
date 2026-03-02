@@ -4,6 +4,7 @@ import { USERS } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, User as UserIcon } from "lucide-react";
+import logoUrl from "@assets/Logo_1772444623720.png";
 
 export default function Login() {
   const { login } = useAppState();
@@ -12,9 +13,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md shadow-xl border-0 bg-background/60 backdrop-blur-xl">
         <CardHeader className="text-center space-y-2 pb-8">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-            <Users className="w-6 h-6 text-primary" />
-          </div>
+          <img src={logoUrl} alt="HWS-CRM Logo" className="mx-auto w-16 h-16 object-contain mb-2" />
           <CardTitle className="text-3xl font-bold tracking-tight">HWS-CRM</CardTitle>
           <CardDescription>
             Wähle einen Test-User, um den Prototyp zu starten.

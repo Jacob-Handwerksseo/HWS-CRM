@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, Users2, Settings, Import } from "lucide-react";
+import logoUrl from "@assets/Logo_1772444623720.png";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -32,9 +33,7 @@ export function Sidebar() {
       <div className="h-16 flex items-center px-6 border-b border-border/50">
         <Link href="/">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary cursor-pointer">
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-              H
-            </div>
+            <img src={logoUrl} alt="HWS" className="w-8 h-8 object-contain" />
             HWS
           </div>
         </Link>
