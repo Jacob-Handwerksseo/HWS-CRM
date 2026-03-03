@@ -82,7 +82,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
           {formattedDate}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 border shadow-lg" align="start">
+      <PopoverContent className="w-auto p-0 border shadow-lg mr-4" align="end" sideOffset={8}>
         <Calendar
           mode="single"
           selected={deadline ? new Date(deadline) : undefined}
