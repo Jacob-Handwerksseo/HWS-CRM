@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, Pencil } from "lucide-react";
+import { Check, X, Pencil, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 type InlineEditProps = {
   value: string;
@@ -13,12 +14,14 @@ type InlineEditProps = {
   type?: "text" | "email" | "tel" | "textarea" | "select";
   options?: { label: string; value: string }[];
   className?: string;
+  copyable?: boolean;
 };
 
-export function InlineEdit({ value, onSave, isEditingMode, type = "text", options = [], className }: InlineEditProps) {
+export function InlineEdit({ value, onSave, isEditingMode, type = "text", options = [], className, copyable = false }: InlineEditProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setCurrentValue(value);
@@ -47,12 +50,32 @@ export function InlineEdit({ value, onSave, isEditingMode, type = "text", option
     setIsEditing(false);
   };
 
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(value);
+    toast({
+      description: "In die Zwischenablage kopiert",
+      duration: 2000,
+    });
+  };
+
   const displayValue = type === "select" ? (options.find(o => o.value === value)?.label || value) : value;
 
   if (!isEditingMode) {
     return (
-      <div className={cn("py-1.5 min-h-[32px] text-sm", className)}>
-        {displayValue || <span className="text-muted-foreground italic">Leer</span>}
+      <div className={cn("py-1.5 min-h-[32px] text-sm group flex items-center gap-2", className)}>
+        <span>{displayValue || <span className="text-muted-foreground italic">Leer</span>}</span>
+        {copyable && displayValue && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+            onClick={handleCopy}
+            title="Kopieren"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
     );
   }

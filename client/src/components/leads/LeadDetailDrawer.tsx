@@ -226,6 +226,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                   type="email"
                   isEditingMode={isEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "email", val)}
+                  copyable
                 />
               </div>
 
@@ -238,6 +239,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                   type="tel"
                   isEditingMode={isEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "phone", val)}
+                  copyable
                 />
               </div>
 
