@@ -91,7 +91,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
           locale={de}
           showOutsideDays={false}
           disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
-          className="rounded-md"
+          className="rounded-md w-[420px] p-6"
         />
         {deadline && (
           <div className="p-3 border-t bg-muted/20">
