@@ -29,6 +29,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
 type LeadDetailDrawerProps = {
   leadId: string | null;
   open: boolean;
@@ -36,12 +45,12 @@ type LeadDetailDrawerProps = {
 };
 
 const statusColors: Record<string, string> = {
-  "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-  "Kontaktiert": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
-  "Qualifiziert": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800",
-  "Verhandlung": "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800",
-  "Gewonnen": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-  "Verloren": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
+  "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  "Kontaktiert": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+  "Qualifiziert": "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
+  "Verhandlung": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  "Gewonnen": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  "Verloren": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
 };
 
 export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProps) {
@@ -76,57 +85,74 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
         <div className="px-6 py-5 border-b bg-background/50 backdrop-blur sticky top-0 z-10">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <div className="flex items-center gap-2 mr-2">
-                  <InlineEdit 
-                    value={lead.status}
-                    options={statusOptions}
-                    type="select"
-                    isEditingMode={isEditingMode}
-                    onSave={(val) => updateLeadField(lead.id, "status", val as LeadStatus)}
-                    className={!isEditingMode ? "hidden" : "w-[140px] h-7 text-xs"}
-                  />
-                  {!isEditingMode && (
-                    <Badge variant="outline" className={statusColors[lead.status] || ""}>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Badge variant="outline" className={`h-8 px-3 text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity border-transparent ${statusColors[lead.status] || ""}`}>
                       {lead.status}
                     </Badge>
-                  )}
-                </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Status ändern</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {statusOptions.map((opt) => (
+                      <DropdownMenuItem 
+                        key={opt.value} 
+                        onClick={() => updateLeadField(lead.id, "status", opt.value as LeadStatus)}
+                        className={lead.status === opt.value ? "bg-muted/50 font-medium" : ""}
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <Badge variant="outline" className="text-xs font-normal bg-muted/30">
+                <Badge variant="outline" className="h-8 px-3 text-sm font-medium border-foreground/80 text-foreground bg-background hover:bg-muted/50 transition-colors">
                   {lead.source}
                 </Badge>
                 
-                <div className="flex items-center gap-2 ml-2">
-                  <div className="relative flex items-center">
-                    <InlineEdit 
-                      value={lead.assignedTo ? lead.assignedTo : "unassigned"}
-                      options={userOptions}
-                      type="select"
-                      isEditingMode={isEditingMode}
-                      onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
-                      className={!isEditingMode ? "hidden" : "w-[160px] h-7 text-xs"}
-                    />
-                    {!isEditingMode && assignedUser && (
-                      <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full border text-xs">
-                        <Avatar className="w-4 h-4">
-                          <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
-                            {assignedUser.avatar}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-muted-foreground">{assignedUser.name}</span>
-                      </div>
-                    )}
-                    {!isEditingMode && !assignedUser && (
-                      <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full border text-xs border-dashed">
-                        <UserCircle2 className="w-4 h-4 text-muted-foreground/50" />
-                        <span className="font-medium text-muted-foreground/70">Nicht zugewiesen</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="h-8 inline-flex items-center gap-2 pl-1 pr-3 rounded-full border border-border bg-background text-sm font-medium cursor-pointer hover:bg-muted/50 transition-colors shadow-sm">
+                      {assignedUser ? (
+                        <>
+                          <Avatar className="w-6 h-6 border-none">
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                              {assignedUser.avatar}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-foreground">{assignedUser.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserCircle2 className="w-6 h-6 text-muted-foreground/50 ml-1" />
+                          <span className="text-muted-foreground/70">Zuweisen</span>
+                        </>
+                      )}
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Zuständigkeit</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => updateLeadField(lead.id, "assignedTo", null)}
+                      className={!lead.assignedTo ? "bg-muted/50 font-medium" : ""}
+                    >
+                      Niemand (Nicht zugewiesen)
+                    </DropdownMenuItem>
+                    {userOptions.filter(u => u.value !== "unassigned").map((opt) => (
+                      <DropdownMenuItem 
+                        key={opt.value} 
+                        onClick={() => updateLeadField(lead.id, "assignedTo", opt.value)}
+                        className={lead.assignedTo === opt.value ? "bg-muted/50 font-medium" : ""}
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              <SheetTitle className="text-2xl font-bold mb-1">{lead.name}</SheetTitle>
+              <SheetTitle className="text-3xl font-bold mb-1 tracking-tight">{lead.name}</SheetTitle>
               {lead.role && (
                 <div className="text-sm text-muted-foreground mb-1.5 font-medium">
                   {lead.role}
