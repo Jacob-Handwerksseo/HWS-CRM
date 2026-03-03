@@ -46,11 +46,9 @@ type LeadDetailDrawerProps = {
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-  "Kontaktiert": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
-  "Qualifiziert": "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
-  "Verhandlung": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  "Gewonnen": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  "Verloren": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  "Erstkontakt": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+  "Setting": "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
+  "Closing": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
 };
 
 export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProps) {
@@ -64,7 +62,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
 
   const assignedUser = USERS.find(u => u.id === lead.assignedTo);
 
-  const statusOptions = ["Neu", "Kontaktiert", "Qualifiziert", "Verhandlung", "Gewonnen", "Verloren"].map(s => ({ label: s, value: s }));
+  const statusOptions = ["Neu", "Erstkontakt", "Setting", "Closing"].map(s => ({ label: s, value: s }));
   const userOptions = [{ label: "Nicht zugewiesen", value: "unassigned" }, ...USERS.map(u => ({ label: u.name, value: u.id }))];
 
   const handleDelete = () => {
