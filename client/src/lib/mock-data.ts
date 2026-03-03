@@ -11,7 +11,7 @@ export const USERS: User[] = [
   { id: "user_b", name: "Jacob", avatar: "J" },
 ];
 
-export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing";
+export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
 export type LeadSource = "Google Ads" | "Tool-Import" | "Manuell";
 
 export type Activity = {

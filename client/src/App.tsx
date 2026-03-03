@@ -11,6 +11,9 @@ import Customers from "@/pages/Customers";
 import Integrations from "@/pages/Integrations";
 import Import from "@/pages/Import";
 
+import ActiveLeads from "@/pages/ActiveLeads";
+import LostLeads from "@/pages/LostLeads";
+
 function Router() {
   return (
     <Switch>
@@ -18,6 +21,8 @@ function Router() {
         <Redirect to="/leads" />
       </Route>
       <Route path="/leads" component={Leads} />
+      <Route path="/active-leads" component={ActiveLeads} />
+      <Route path="/lost-leads" component={LostLeads} />
       <Route path="/customers" component={Customers} />
       <Route path="/integrations" component={Integrations} />
       <Route path="/import" component={Import} />

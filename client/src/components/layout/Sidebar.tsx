@@ -10,7 +10,9 @@ export function Sidebar() {
     {
       title: "Sales",
       items: [
-        { href: "/leads", icon: Users, label: "Leads" },
+        { href: "/leads", icon: Users, label: "Neue Leads" },
+        { href: "/active-leads", icon: LayoutDashboard, label: "Aktive Leads" },
+        { href: "/lost-leads", icon: Users2, label: "Verlorene Leads" },
       ]
     },
     {
