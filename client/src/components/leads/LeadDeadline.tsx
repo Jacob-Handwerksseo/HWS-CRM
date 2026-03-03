@@ -88,6 +88,9 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
           selected={deadline ? new Date(deadline) : undefined}
           onSelect={handleSelect}
           initialFocus
+          locale={de}
+          showOutsideDays={false}
+          disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
         />
         {deadline && (
           <div className="p-3 border-t">
