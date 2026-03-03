@@ -76,24 +76,55 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
         <div className="px-6 py-5 border-b bg-background/50 backdrop-blur sticky top-0 z-10">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge variant="outline" className={statusColors[lead.status] || ""}>
-                  {lead.status}
-                </Badge>
-                <Badge variant="outline" className="text-xs font-normal">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mr-2">
+                  <InlineEdit 
+                    value={lead.status}
+                    options={statusOptions}
+                    type="select"
+                    isEditingMode={isEditingMode}
+                    onSave={(val) => updateLeadField(lead.id, "status", val as LeadStatus)}
+                    className={!isEditingMode ? "hidden" : "w-[140px] h-7 text-xs"}
+                  />
+                  {!isEditingMode && (
+                    <Badge variant="outline" className={statusColors[lead.status] || ""}>
+                      {lead.status}
+                    </Badge>
+                  )}
+                </div>
+
+                <Badge variant="outline" className="text-xs font-normal bg-muted/30">
                   {lead.source}
                 </Badge>
                 
-                {assignedUser && (
-                  <div className="flex items-center gap-1.5 ml-2 bg-muted/50 px-2 py-0.5 rounded-full border text-xs">
-                    <Avatar className="w-4 h-4">
-                      <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
-                        {assignedUser.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium text-muted-foreground">{assignedUser.name}</span>
+                <div className="flex items-center gap-2 ml-2">
+                  <div className="relative flex items-center">
+                    <InlineEdit 
+                      value={lead.assignedTo ? lead.assignedTo : "unassigned"}
+                      options={userOptions}
+                      type="select"
+                      isEditingMode={isEditingMode}
+                      onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
+                      className={!isEditingMode ? "hidden" : "w-[160px] h-7 text-xs"}
+                    />
+                    {!isEditingMode && assignedUser && (
+                      <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full border text-xs">
+                        <Avatar className="w-4 h-4">
+                          <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                            {assignedUser.avatar}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-muted-foreground">{assignedUser.name}</span>
+                      </div>
+                    )}
+                    {!isEditingMode && !assignedUser && (
+                      <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full border text-xs border-dashed">
+                        <UserCircle2 className="w-4 h-4 text-muted-foreground/50" />
+                        <span className="font-medium text-muted-foreground/70">Nicht zugewiesen</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
               <SheetTitle className="text-2xl font-bold mb-1">{lead.name}</SheetTitle>
               {lead.role && (
@@ -108,6 +139,15 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
             </div>
 
             <div className="flex items-center gap-2">
+              <Button 
+                variant={isEditingMode ? "secondary" : "ghost"} 
+                size="icon" 
+                className={isEditingMode ? "h-9 w-9 bg-primary/10 text-primary hover:bg-primary/20" : "h-9 w-9 text-muted-foreground hover:text-foreground"}
+                onClick={() => setIsEditingMode(!isEditingMode)}
+                title={isEditingMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
+              >
+                <Edit3 className="w-4 h-4" />
+              </Button>
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -131,85 +171,27 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </AlertDialog>
             </div>
           </div>
-
-          <div className="flex items-center justify-between mt-6 p-3 bg-muted/30 rounded-lg border border-border/50">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="edit-mode" 
-                checked={isEditingMode} 
-                onCheckedChange={setIsEditingMode} 
-              />
-              <Label htmlFor="edit-mode" className="flex items-center gap-1.5 cursor-pointer font-medium">
-                <Edit3 className="w-4 h-4 text-muted-foreground" />
-                Bearbeitungsmodus
-              </Label>
-            </div>
-            
-            {isEditingMode && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1 animate-in fade-in slide-in-from-right-4">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-40"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                Klicke auf Felder zum Bearbeiten
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Content Section */}
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-8 pb-20">
             
+            {/* Status & Assignment Header (Edit Mode only or always shown?)
+                The prompt says "Zuständig und Status soll oben neben 'neu' also lead art und leadquelle nebendran stehen."
+                But they still need to be editable. Let's move the edit fields to the top.
+            */}
+            
             {/* Quick Info Grid */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-8">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                  <UserCircle2 className="w-3.5 h-3.5" /> Zuständig
-                </label>
-                <div className="relative">
-                  <InlineEdit 
-                    value={lead.assignedTo ? lead.assignedTo : "unassigned"}
-                    options={userOptions}
-                    type="select"
-                    isEditingMode={isEditingMode}
-                    onSave={(val) => updateLeadField(lead.id, "assignedTo", val === "unassigned" ? null : val)}
-                    className={!isEditingMode && assignedUser ? "text-transparent select-none" : ""}
-                  />
-                  {!isEditingMode && assignedUser && (
-                    <div className="flex items-center gap-2 absolute top-1.5 left-0 pointer-events-none">
-                      <Avatar className="w-5 h-5">
-                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                          {assignedUser.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{assignedUser.name}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                  <Calendar className="w-3.5 h-3.5" /> Status
+                  <Building2 className="w-3.5 h-3.5" /> Unternehmen
                 </label>
                 <InlineEdit 
-                  value={lead.status}
-                  options={statusOptions}
-                  type="select"
+                  value={lead.company}
                   isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "status", val as LeadStatus)}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                  <UserCircle2 className="w-3.5 h-3.5" /> Rolle / Position
-                </label>
-                <InlineEdit 
-                  value={lead.role || ""}
-                  isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "role", val)}
+                  onSave={(val) => updateLeadField(lead.id, "company", val)}
                 />
               </div>
 
@@ -226,12 +208,12 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                  <Building2 className="w-3.5 h-3.5" /> Unternehmen
+                  <UserCircle2 className="w-3.5 h-3.5" /> Rolle / Position
                 </label>
                 <InlineEdit 
-                  value={lead.company}
+                  value={lead.role || ""}
                   isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "company", val)}
+                  onSave={(val) => updateLeadField(lead.id, "role", val)}
                 />
               </div>
 
@@ -261,6 +243,17 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <MapPin className="w-3.5 h-3.5" /> Adresse
+                </label>
+                <InlineEdit 
+                  value={lead.address}
+                  isEditingMode={isEditingMode}
+                  onSave={(val) => updateLeadField(lead.id, "address", val)}
+                />
+              </div>
+
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Globe className="w-3.5 h-3.5" /> Website
                 </label>
                 <InlineEdit 
@@ -268,17 +261,6 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                   isEditingMode={isEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "website", val)}
                   className="text-primary hover:underline"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                  <MapPin className="w-3.5 h-3.5" /> Adresse
-                </label>
-                <InlineEdit 
-                  value={lead.address}
-                  isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "address", val)}
                 />
               </div>
             </div>
