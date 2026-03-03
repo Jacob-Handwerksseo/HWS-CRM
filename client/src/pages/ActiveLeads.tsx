@@ -35,9 +35,9 @@ export default function ActiveLeads() {
           </div>
         </div>
 
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
+        <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
           {COLUMNS.map((status) => (
-            <div key={status} className="flex-shrink-0 w-[350px] flex flex-col bg-muted/30 rounded-xl border border-border/50">
+            <div key={status} className="flex-1 min-w-[250px] max-w-[400px] flex flex-col bg-muted/30 rounded-xl border border-border/50">
               <div className="p-4 border-b border-border/50 flex justify-between items-center bg-card rounded-t-xl">
                 <h3 className="font-semibold">{status}</h3>
                 <Badge variant="secondary" className="bg-background">
