@@ -82,7 +82,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
           {formattedDate}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 border shadow-lg" align="start">
         <Calendar
           mode="single"
           selected={deadline ? new Date(deadline) : undefined}
@@ -91,12 +91,13 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
           locale={de}
           showOutsideDays={false}
           disabled={(date) => date.getDay() === 0 || date.getDay() === 6}
+          className="rounded-md"
         />
         {deadline && (
-          <div className="p-3 border-t">
+          <div className="p-3 border-t bg-muted/20">
             <Button 
               variant="ghost" 
-              className="w-full h-8 text-xs text-muted-foreground" 
+              className="w-full h-9 text-sm text-muted-foreground hover:text-foreground" 
               onClick={() => handleSelect(undefined)}
             >
               Frist entfernen
