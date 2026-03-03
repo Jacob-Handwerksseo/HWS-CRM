@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal, ArrowUpDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { LeadDeadline } from "@/components/leads/LeadDeadline";
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -119,6 +120,7 @@ export default function Leads() {
                   <TableHead>Status</TableHead>
                   <TableHead>Quelle</TableHead>
                   <TableHead>Zuweisung</TableHead>
+                  <TableHead>Frist</TableHead>
                   <TableHead>Letzter Kontakt</TableHead>
                   <TableHead>Erstellt am</TableHead>
                   <TableHead className="text-right"></TableHead>
@@ -166,6 +168,9 @@ export default function Leads() {
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Unassigned</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {lead.lastContact 

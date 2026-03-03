@@ -4,6 +4,7 @@ import { useAppState } from "@/lib/app-state";
 import { LeadStatus } from "@/lib/mock-data";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
+import { LeadDeadline } from "@/components/leads/LeadDeadline";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -58,9 +59,23 @@ export default function ActiveLeads() {
     
   }, [updateLeadField]);
 
-  // Group leads by status
+  // Group and sort leads by status and deadline
   const leadsByStatus = COLUMNS.reduce((acc, status) => {
-    acc[status] = leads.filter((l) => l.status === status);
+    // Filter by status
+    const statusLeads = leads.filter((l) => l.status === status);
+    
+    // Sort by deadline: Overdue -> Today -> Future -> No deadline
+    statusLeads.sort((a, b) => {
+      if (!a.nextFollowUp && !b.nextFollowUp) return 0;
+      if (!a.nextFollowUp) return 1;
+      if (!b.nextFollowUp) return -1;
+      
+      const dateA = new Date(a.nextFollowUp).getTime();
+      const dateB = new Date(b.nextFollowUp).getTime();
+      return dateA - dateB;
+    });
+
+    acc[status] = statusLeads;
     return acc;
   }, {} as Record<string, typeof leads>);
 
@@ -139,12 +154,7 @@ export default function ActiveLeads() {
                                       </Badge>
                                     </div>
                                     
-                                    {lead.nextFollowUp && (
-                                      <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 px-2 py-1 rounded-md w-fit">
-                                        <CalendarDays className="w-3.5 h-3.5" />
-                                        {format(new Date(lead.nextFollowUp), "dd.MM.yyyy", { locale: de })}
-                                      </div>
-                                    )}
+                                    <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" className="mt-1" />
                                   </CardContent>
                                 </Card>
                               </div>

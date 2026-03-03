@@ -12,6 +12,7 @@ import { useAppState } from "@/lib/app-state";
 import { USERS, LeadStatus, LeadSource } from "@/lib/mock-data";
 import { InlineEdit } from "./InlineEdit";
 import { ActivityFeed } from "./ActivityFeed";
+import { LeadDeadline } from "./LeadDeadline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Building2, Mail, Phone, Globe, MapPin, 
@@ -151,6 +152,8 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="picker" />
               </div>
               <SheetTitle className="text-3xl font-bold mb-1 tracking-tight">{lead.name}</SheetTitle>
               {lead.role && (
