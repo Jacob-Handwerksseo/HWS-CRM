@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAppState } from "@/lib/app-state";
 import { LeadStatus } from "@/lib/mock-data";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Building2, Mail, Phone, CalendarDays } from "lucide-react";
+import { Building2, CalendarDays } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { USERS } from "@/lib/mock-data";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const COLUMNS: LeadStatus[] = ["Erstkontakt", "Setting", "Closing", "Wiedervorlage"];
 
@@ -18,6 +19,44 @@ export default function ActiveLeads() {
   const { leads, updateLeadField } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  
+  // Track recently moved leads for animation
+  const [recentlyMoved, setRecentlyMoved] = useState<string | null>(null);
+
+  // Clear animation after some time
+  useEffect(() => {
+    if (recentlyMoved) {
+      const timer = setTimeout(() => {
+        setRecentlyMoved(null);
+      }, 3000); // Pulse for 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyMoved]);
+
+  // Handle drag end
+  const onDragEnd = useCallback((result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // Dropped outside the list
+    if (!destination) return;
+
+    // Dropped in the same spot
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const newStatus = destination.droppableId as LeadStatus;
+    
+    // Update lead status
+    updateLeadField(draggableId, "status", newStatus);
+    
+    // Trigger animation
+    setRecentlyMoved(draggableId);
+    
+  }, [updateLeadField]);
 
   // Group leads by status
   const leadsByStatus = COLUMNS.reduce((acc, status) => {
@@ -35,62 +74,92 @@ export default function ActiveLeads() {
           </div>
         </div>
 
-        <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((status) => (
-            <div key={status} className="flex-1 min-w-[250px] max-w-[400px] flex flex-col bg-muted/30 rounded-xl border border-border/50">
-              <div className="p-4 border-b border-border/50 flex justify-between items-center bg-card rounded-t-xl">
-                <h3 className="font-semibold">{status}</h3>
-                <Badge variant="secondary" className="bg-background">
-                  {leadsByStatus[status].length}
-                </Badge>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {leadsByStatus[status].map((lead) => {
-                  const assignedUser = USERS.find(u => u.id === lead.assignedTo);
-                  return (
-                    <Card 
-                      key={lead.id} 
-                      className="cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
-                      onClick={() => setSelectedLeadId(lead.id)}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="flex-1 flex gap-4 overflow-x-auto pb-4 items-start">
+            {COLUMNS.map((status) => (
+              <div key={status} className="flex flex-col bg-muted/30 rounded-xl border border-border/50 h-full max-h-full flex-1 min-w-[250px] max-w-[400px]">
+                <div className="p-4 border-b border-border/50 flex justify-between items-center bg-card rounded-t-xl shrink-0">
+                  <h3 className="font-semibold">{status}</h3>
+                  <Badge variant="secondary" className="bg-background">
+                    {leadsByStatus[status].length}
+                  </Badge>
+                </div>
+                
+                <Droppable droppableId={status}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px] ${
+                        snapshot.isDraggingOver ? "bg-primary/5" : ""
+                      } transition-colors`}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium text-base truncate pr-2">{lead.name}</div>
-                          {assignedUser && (
-                            <Avatar className="w-6 h-6 border shadow-sm shrink-0">
-                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                {assignedUser.avatar}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                        </div>
+                      {leadsByStatus[status].map((lead, index) => {
+                        const assignedUser = USERS.find(u => u.id === lead.assignedTo);
+                        const isRecentlyMoved = recentlyMoved === lead.id;
                         
-                        <div className="text-sm text-muted-foreground flex items-center gap-2 mb-3">
-                          <Building2 className="w-3.5 h-3.5" />
-                          <span className="truncate">{lead.company}</span>
-                        </div>
+                        return (
+                          <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  opacity: snapshot.isDragging ? 0.8 : 1,
+                                }}
+                              >
+                                <Card 
+                                  className={`cursor-pointer transition-all duration-500 ${
+                                    snapshot.isDragging ? "border-primary shadow-xl scale-105 z-50 relative rotate-2" : "hover:border-primary/50 shadow-sm"
+                                  } ${isRecentlyMoved ? "ring-2 ring-primary bg-primary/10 animate-pulse scale-[1.02]" : ""}`}
+                                  onClick={() => setSelectedLeadId(lead.id)}
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div className="font-medium text-base truncate pr-2">{lead.name}</div>
+                                      {assignedUser && (
+                                        <Avatar className="w-6 h-6 border shadow-sm shrink-0">
+                                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                            {assignedUser.avatar}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="text-sm text-muted-foreground flex items-center gap-2 mb-3">
+                                      <Building2 className="w-3.5 h-3.5" />
+                                      <span className="truncate">{lead.company}</span>
+                                    </div>
 
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <Badge variant="outline" className="text-[10px] px-1.5 h-5 bg-background">
-                            {lead.source}
-                          </Badge>
-                        </div>
-                        
-                        {lead.nextFollowUp && (
-                          <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 px-2 py-1 rounded-md w-fit">
-                            <CalendarDays className="w-3.5 h-3.5" />
-                            {format(new Date(lead.nextFollowUp), "dd.MM.yyyy", { locale: de })}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                      <Badge variant="outline" className="text-[10px] px-1.5 h-5 bg-background">
+                                        {lead.source}
+                                      </Badge>
+                                    </div>
+                                    
+                                    {lead.nextFollowUp && (
+                                      <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 px-2 py-1 rounded-md w-fit">
+                                        <CalendarDays className="w-3.5 h-3.5" />
+                                        {format(new Date(lead.nextFollowUp), "dd.MM.yyyy", { locale: de })}
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </DragDropContext>
       </div>
 
       <LeadDetailDrawer
