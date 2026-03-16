@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { useAppState } from "@/lib/app-state";
-import { LeadStatus } from "@/lib/mock-data";
+import { useAppState, LeadStatus } from "@/lib/app-state";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
 import { LeadDeadline } from "@/components/leads/LeadDeadline";
@@ -11,7 +10,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Building2, CalendarDays } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { USERS } from "@/lib/mock-data";
+import { USERS } from "@/lib/app-state";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const COLUMNS: LeadStatus[] = ["Erstkontakt", "Setting", "Closing", "Wiedervorlage"];

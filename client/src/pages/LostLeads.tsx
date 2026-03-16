@@ -5,7 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { useAppState } from "@/lib/app-state";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
-import { USERS } from "@/lib/mock-data";
+import { USERS } from "@/lib/app-state";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

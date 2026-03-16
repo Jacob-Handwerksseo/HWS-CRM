@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAppState } from "@/lib/app-state";
-import { USERS } from "@/lib/mock-data";
+import { USERS } from "@/lib/app-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, User as UserIcon } from "lucide-react";

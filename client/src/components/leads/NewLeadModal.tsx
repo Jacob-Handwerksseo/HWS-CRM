@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppState } from "@/lib/app-state";
-import { USERS } from "@/lib/mock-data";
+import { USERS } from "@/lib/app-state";
 
 type NewLeadModalProps = {
   open: boolean;
@@ -97,6 +97,7 @@ export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
                 <SelectContent>
                   <SelectItem value="Manuell">Manuell</SelectItem>
                   <SelectItem value="Google Ads">Google Ads</SelectItem>
+                  <SelectItem value="Organisch">Organisch</SelectItem>
                   <SelectItem value="Tool-Import">Tool-Import</SelectItem>
                 </SelectContent>
               </Select>

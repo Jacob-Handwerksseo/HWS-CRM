@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { USERS } from "@/lib/mock-data";
+import { USERS } from "@/lib/app-state";
 import { Send, Pencil, Check, X, Clock } from "lucide-react";
 
 export function ActivityFeed({ leadId }: { leadId: string }) {

@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAppState } from "@/lib/app-state";
-import { USERS, LeadStatus, LeadSource } from "@/lib/mock-data";
+import { USERS, LeadStatus, LeadSource } from "@/lib/app-state";
 import { InlineEdit } from "./InlineEdit";
 import { ActivityFeed } from "./ActivityFeed";
 import { LeadDeadline } from "./LeadDeadline";
