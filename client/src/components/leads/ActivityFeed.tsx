@@ -5,11 +5,10 @@ import { useAppState } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { USERS } from "@/lib/app-state";
 import { Send, Pencil, Check, X, Clock } from "lucide-react";
 
 export function ActivityFeed({ leadId }: { leadId: string }) {
-  const { leads, addActivity, updateActivity } = useAppState();
+  const { leads, addActivity, updateActivity, users } = useAppState();
   const lead = leads.find(l => l.id === leadId);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,7 +44,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
       
       <div className="flex-1 overflow-auto p-5 space-y-6">
         {sortedActivities.map((activity) => {
-          const author = USERS.find(u => u.id === activity.authorId);
+          const author = users.find(u => u.id === activity.authorId);
           const isSystem = activity.type === "system";
           
           if (isSystem) {
@@ -66,7 +65,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
             <div key={activity.id} className="flex gap-4 group">
               <Avatar className="w-8 h-8 border mt-0.5">
                 <AvatarFallback className="text-xs bg-primary/5 text-primary">
-                  {author?.avatar || "?"}
+                  {author?.name?.charAt(0).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               

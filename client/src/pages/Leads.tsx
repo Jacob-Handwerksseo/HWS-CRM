@@ -5,7 +5,6 @@ import { Layout } from "@/components/layout/Layout";
 import { useAppState } from "@/lib/app-state";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
-import { USERS } from "@/lib/app-state";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,7 +24,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Leads() {
-  const { leads, currentUser, deleteLead } = useAppState();
+  const { leads, currentUser, deleteLead, users } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
@@ -40,11 +39,11 @@ export default function Leads() {
     if (activeTab === "import" && lead.source !== "Tool-Import") return false;
     if (activeTab === "manual" && lead.source !== "Manuell") return false;
     
-    // Filter by assignee
     if (activeAssigneeFilter === "mine" && lead.assignedTo !== currentUser?.id) return false;
     if (activeAssigneeFilter === "unassigned" && lead.assignedTo !== null) return false;
-    if (activeAssigneeFilter === "user_a" && lead.assignedTo !== "user_a") return false;
-    if (activeAssigneeFilter === "user_b" && lead.assignedTo !== "user_b") return false;
+    if (activeAssigneeFilter !== "all" && activeAssigneeFilter !== "mine" && activeAssigneeFilter !== "unassigned") {
+      if (lead.assignedTo !== activeAssigneeFilter) return false;
+    }
 
     return true;
   });
@@ -102,8 +101,9 @@ export default function Leads() {
                 <TabsTrigger value="all">Alle</TabsTrigger>
                 <TabsTrigger value="mine">Meine Leads</TabsTrigger>
                 <TabsTrigger value="unassigned">Nicht zugewiesen</TabsTrigger>
-                <TabsTrigger value="user_a">André</TabsTrigger>
-                <TabsTrigger value="user_b">Jacob</TabsTrigger>
+                {users.map(u => (
+                  <TabsTrigger key={u.id} value={u.id}>{u.name}</TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           </div>
@@ -135,7 +135,7 @@ export default function Leads() {
                   </TableRow>
                 ) : (
                   filteredLeads.map((lead) => {
-                    const assignee = USERS.find(u => u.id === lead.assignedTo);
+                    const assignee = users.find(u => u.id === lead.assignedTo);
                     
                     return (
                       <TableRow 
@@ -160,7 +160,7 @@ export default function Leads() {
                             <div className="flex items-center gap-2">
                               <Avatar className="w-6 h-6 border">
                                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                  {assignee.avatar}
+                                  {assignee.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-sm truncate max-w-[120px]">{assignee.name}</span>

@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAppState } from "@/lib/app-state";
-import { USERS, LeadStatus, LeadSource } from "@/lib/app-state";
+import type { LeadStatus, LeadSource } from "@/lib/app-state";
 import { InlineEdit } from "./InlineEdit";
 import { ActivityFeed } from "./ActivityFeed";
 import { LeadDeadline } from "./LeadDeadline";
@@ -55,7 +55,7 @@ const statusColors: Record<string, string> = {
 };
 
 export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProps) {
-  const { leads, updateLeadField, deleteLead } = useAppState();
+  const { leads, updateLeadField, deleteLead, users } = useAppState();
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -63,10 +63,10 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
 
   if (!lead) return null;
 
-  const assignedUser = USERS.find(u => u.id === lead.assignedTo);
+  const assignedUser = users.find(u => u.id === lead.assignedTo);
 
   const statusOptions = ["Neu", "Erstkontakt", "Setting", "Closing", "Wiedervorlage", "Verlorener Lead"].map(s => ({ label: s, value: s }));
-  const userOptions = [{ label: "Nicht zugewiesen", value: "unassigned" }, ...USERS.map(u => ({ label: u.name, value: u.id }))];
+  const userOptions = [{ label: "Nicht zugewiesen", value: "unassigned" }, ...users.map(u => ({ label: u.name, value: u.id }))];
 
   const handleDelete = () => {
     deleteLead(lead.id);
@@ -119,7 +119,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                         <>
                           <Avatar className="w-6 h-6 border-none">
                             <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                              {assignedUser.avatar}
+                              {assignedUser.name.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-foreground">{assignedUser.name}</span>

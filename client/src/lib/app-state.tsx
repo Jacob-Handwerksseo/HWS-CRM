@@ -4,14 +4,9 @@ import { apiRequest } from "./queryClient";
 
 export type User = {
   id: string;
+  username: string;
   name: string;
-  avatar: string;
 };
-
-export const USERS: User[] = [
-  { id: "user_a", name: "André", avatar: "A" },
-  { id: "user_b", name: "Jacob", avatar: "J" },
-];
 
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
 export type LeadSource = "Google Ads" | "Organisch" | "Tool-Import" | "Manuell";
@@ -48,9 +43,11 @@ export type LeadWithActivities = Lead & { activities: Activity[] };
 
 type AppStateContextType = {
   currentUser: User | null;
-  login: (userId: string) => void;
-  logout: () => void;
+  isAuthLoading: boolean;
+  login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
 
+  users: User[];
   leads: LeadWithActivities[];
   isLoading: boolean;
   addLead: (lead: Omit<Lead, "id" | "createdAt">) => Promise<void>;
@@ -64,11 +61,41 @@ type AppStateContextType = {
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
+
+  const { data: currentUser, isLoading: isAuthLoading } = useQuery<User | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.status === 401) return null;
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: !!currentUser,
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/users", { credentials: "include" });
+        if (!res.ok) return [];
+        return res.json();
+      } catch {
+        return [];
+      }
+    },
+  });
 
   const { data: rawLeads = [], isLoading: leadsLoading } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
+    enabled: !!currentUser,
   });
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, Activity[]>>({});
@@ -81,7 +108,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         await Promise.all(
           rawLeads.map(async (lead) => {
             try {
-              const res = await fetch(`/api/leads/${lead.id}/activities`);
+              const res = await fetch(`/api/leads/${lead.id}/activities`, { credentials: "include" });
               if (res.ok) {
                 map[lead.id] = await res.json();
               }
@@ -101,12 +128,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     activities: activitiesMap[lead.id] || [],
   }));
 
-  const login = (userId: string) => {
-    const user = USERS.find((u) => u.id === userId);
-    if (user) setCurrentUser(user);
+  const login = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await apiRequest("POST", "/api/auth/login", { username, password });
+      const user = await res.json();
+      queryClient.setQueryData(["/api/auth/me"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      return { success: true };
+    } catch (error: any) {
+      const msg = error?.message?.includes("401") ? "Ungültige Anmeldedaten" : "Login fehlgeschlagen";
+      return { success: false, message: msg };
+    }
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = async () => {
+    try {
+      await apiRequest("POST", "/api/auth/logout");
+    } catch {}
+    queryClient.setQueryData(["/api/auth/me"], null);
+    queryClient.clear();
+  };
 
   const createLeadMutation = useMutation({
     mutationFn: async (leadData: Omit<Lead, "id" | "createdAt">) => {
@@ -132,16 +174,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const updateLeadMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, any> }) => {
-      const fieldMap: Record<string, string> = {
-        assignedTo: "assignedTo",
-        lastContact: "lastContact",
-        nextFollowUp: "nextFollowUp",
-      };
-      const apiData: Record<string, any> = {};
-      for (const [key, value] of Object.entries(data)) {
-        apiData[key] = value;
-      }
-      const res = await apiRequest("PATCH", `/api/leads/${id}`, apiData);
+      const res = await apiRequest("PATCH", `/api/leads/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -215,9 +248,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppStateContext.Provider
       value={{
-        currentUser,
+        currentUser: currentUser ?? null,
+        isAuthLoading,
         login,
         logout,
+        users: allUsers,
         leads,
         isLoading: leadsLoading,
         addLead,

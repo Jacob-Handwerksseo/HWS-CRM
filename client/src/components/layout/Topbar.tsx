@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLocation } from "wouter";
 
 interface TopbarProps {
   onNewLead?: () => void;
@@ -18,6 +19,7 @@ interface TopbarProps {
 
 export function Topbar({ onNewLead }: TopbarProps) {
   const { currentUser, logout } = useAppState();
+  const [, navigate] = useLocation();
 
   return (
     <header className="h-16 border-b bg-background/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30">
@@ -46,10 +48,10 @@ export function Topbar({ onNewLead }: TopbarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2">
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full ml-2" data-testid="button-user-menu">
               <Avatar className="h-9 w-9 border border-border">
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {currentUser?.avatar}
+                  {currentUser?.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -57,14 +59,16 @@ export function Topbar({ onNewLead }: TopbarProps) {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{currentUser?.name}</p>
+                <p className="text-sm font-medium leading-none" data-testid="text-current-user">{currentUser?.name}</p>
                 <p className="text-xs text-muted-foreground leading-none">Angemeldet als Admin</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">Profil & Einstellungen</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/profile")} data-testid="link-profile">
+              Profil & Einstellungen
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
+            <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer" data-testid="button-logout">
               Abmelden
             </DropdownMenuItem>
           </DropdownMenuContent>

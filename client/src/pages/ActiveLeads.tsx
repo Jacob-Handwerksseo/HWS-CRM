@@ -10,13 +10,12 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Building2, CalendarDays } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { USERS } from "@/lib/app-state";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const COLUMNS: LeadStatus[] = ["Erstkontakt", "Setting", "Closing", "Wiedervorlage"];
 
 export default function ActiveLeads() {
-  const { leads, updateLeadField } = useAppState();
+  const { leads, updateLeadField, users } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   
@@ -109,7 +108,7 @@ export default function ActiveLeads() {
                       } transition-colors`}
                     >
                       {leadsByStatus[status].map((lead, index) => {
-                        const assignedUser = USERS.find(u => u.id === lead.assignedTo);
+                        const assignedUser = users.find(u => u.id === lead.assignedTo);
                         const isRecentlyMoved = recentlyMoved === lead.id;
                         
                         return (
@@ -136,7 +135,7 @@ export default function ActiveLeads() {
                                       {assignedUser && (
                                         <Avatar className="w-6 h-6 border shadow-sm shrink-0">
                                           <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                            {assignedUser.avatar}
+                                            {assignedUser.name.charAt(0).toUpperCase()}
                                           </AvatarFallback>
                                         </Avatar>
                                       )}

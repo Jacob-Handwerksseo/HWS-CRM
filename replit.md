@@ -7,34 +7,45 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS v4, shadcn/ui, TanStack Query, wouter routing
 - **Backend**: Express.js with REST API endpoints
 - **Database**: PostgreSQL with Drizzle ORM
+- **Auth**: bcrypt password hashing, express-session with connect-pg-simple
 - **Drag & Drop**: @hello-pangea/dnd for Kanban board
 
 ## Key Files
 - `shared/schema.ts` — Drizzle schema: `leads`, `activities`, `users` tables with enums
 - `server/db.ts` — Database connection via @neondatabase/serverless
 - `server/storage.ts` — DatabaseStorage class implementing IStorage interface
-- `server/routes.ts` — REST API: /api/leads, /api/leads/:id/activities, /api/activities/:id, /api/seed
-- `client/src/lib/app-state.tsx` — React context + TanStack Query for API-driven state
+- `server/auth.ts` — Session auth: login/logout/me/profile routes, requireAuth middleware, user seeding
+- `server/routes.ts` — REST API: /api/leads, /api/leads/:id/activities, /api/activities/:id, /api/seed (all protected with requireAuth)
+- `client/src/lib/app-state.tsx` — React context + TanStack Query for API-driven state, auth state
 - `client/src/lib/queryClient.ts` — Query client with apiRequest helper
 
 ## Pages
-- `/` — Login (user select: André, Jacob)
-- `/leads` — All leads table view
+- `/` — Redirects to /leads (if logged in) or shows login form
+- `/leads` — All leads table view (Neu status)
 - `/active-leads` — Kanban board with drag-and-drop
 - `/lost-leads` — Lost leads table
 - `/email-inbox` — IMAP email configuration page
+- `/profile` — Profile settings: change name, username, password
+
+## Authentication
+- Session-based auth with PostgreSQL session store
+- Login: POST /api/auth/login (username + password)
+- Logout: POST /api/auth/logout
+- Current user: GET /api/auth/me
+- Profile update: PATCH /api/auth/profile
+- Default users seeded on startup: andre/andre123, jacob/jacob123
+- All API routes protected with requireAuth middleware
 
 ## Data Model
-- **Lead**: id (UUID), name, role, company, status (enum), source (enum), assignedTo, lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
+- **User**: id (UUID), username (unique), name, password (bcrypt hash)
+- **Lead**: id (UUID), name, role, company, status (enum), source (enum), assignedTo (user UUID), lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
 - **Activity**: id (UUID), leadId (FK), type (comment/system), text, authorId, timestamp, updatedAt
 - **LeadStatus**: Neu, Erstkontakt, Setting, Closing, Wiedervorlage, Verlorener Lead
 - **LeadSource**: Google Ads, Organisch, Tool-Import, Manuell
-
-## Users
-- André (user_a), Jacob (user_b) — stored as strings in leads.assignedTo (not FK)
 
 ## Design Notes
 - Minimal SaaS, Inter font, light theme, color-coded status badges
 - Tailwind v4 CSS variables use raw `H S% L%` format in index.css
 - InlineEdit.tsx must NOT have a companion barrel file (causes runtime crash)
 - Calendar uses table-fixed + w-[14.28%] for weekday alignment
+- User avatars show first letter of name (no avatar field)

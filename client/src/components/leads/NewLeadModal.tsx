@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppState } from "@/lib/app-state";
-import { USERS } from "@/lib/app-state";
 
 type NewLeadModalProps = {
   open: boolean;
@@ -13,7 +12,7 @@ type NewLeadModalProps = {
 };
 
 export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
-  const { addLead, currentUser } = useAppState();
+  const { addLead, currentUser, users } = useAppState();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -114,7 +113,7 @@ export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Nicht zugewiesen</SelectItem>
-                  {USERS.map(u => (
+                  {users.map(u => (
                     <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                   ))}
                 </SelectContent>

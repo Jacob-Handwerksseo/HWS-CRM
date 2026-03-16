@@ -27,6 +27,7 @@ export const activityTypeEnum = pgEnum("activity_type", [
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
+  name: text("name").notNull(),
   password: text("password").notNull(),
 });
 
@@ -60,6 +61,7 @@ export const activities = pgTable("activities", {
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
+  name: true,
   password: true,
 });
 

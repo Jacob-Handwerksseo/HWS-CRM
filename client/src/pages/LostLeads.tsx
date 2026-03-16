@@ -5,7 +5,6 @@ import { Layout } from "@/components/layout/Layout";
 import { useAppState } from "@/lib/app-state";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
 import { NewLeadModal } from "@/components/leads/NewLeadModal";
-import { USERS } from "@/lib/app-state";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,7 +19,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LostLeads() {
-  const { leads, currentUser } = useAppState();
+  const { leads, currentUser, users } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
 
@@ -57,7 +56,7 @@ export default function LostLeads() {
                   </TableRow>
                 ) : (
                   filteredLeads.map((lead) => {
-                    const assignedUser = USERS.find(u => u.id === lead.assignedTo);
+                    const assignedUser = users.find(u => u.id === lead.assignedTo);
                     
                     return (
                       <TableRow 
@@ -84,7 +83,7 @@ export default function LostLeads() {
                             <div className="flex items-center gap-2">
                               <Avatar className="w-6 h-6 border shadow-sm">
                                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                  {assignedUser.avatar}
+                                  {assignedUser.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-sm text-muted-foreground">{assignedUser.name}</span>
