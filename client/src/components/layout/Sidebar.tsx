@@ -24,7 +24,7 @@ export function Sidebar() {
     {
       title: "System",
       items: [
-        { href: "/integrations", icon: Settings, label: "Integrationen" },
+        { href: "/email-inbox", icon: Settings, label: "E-Mail Postfach" },
         { href: "/import", icon: Import, label: "Import" },
       ]
     }

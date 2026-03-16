@@ -8,7 +8,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import Leads from "@/pages/Leads";
 import Customers from "@/pages/Customers";
-import Integrations from "@/pages/Integrations";
+import EmailInbox from "@/pages/EmailInbox";
 import Import from "@/pages/Import";
 
 import ActiveLeads from "@/pages/ActiveLeads";
@@ -24,7 +24,7 @@ function Router() {
       <Route path="/active-leads" component={ActiveLeads} />
       <Route path="/lost-leads" component={LostLeads} />
       <Route path="/customers" component={Customers} />
-      <Route path="/integrations" component={Integrations} />
+      <Route path="/email-inbox" component={EmailInbox} />
       <Route path="/import" component={Import} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />

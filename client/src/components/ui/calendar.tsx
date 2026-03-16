@@ -87,7 +87,7 @@ function Calendar({
         table: "w-full border-collapse table-fixed",
         weekdays: cn("", defaultClassNames.weekdays),
         weekday: cn(
-          "text-muted-foreground font-medium text-[0.95rem] text-center pb-2",
+          "text-muted-foreground font-medium text-[0.95rem] text-center pb-2 w-[14.28%]",
           defaultClassNames.weekday
         ),
         week: cn("mt-2", defaultClassNames.week),
@@ -100,7 +100,7 @@ function Calendar({
           defaultClassNames.week_number
         ),
         day: cn(
-          "group/day relative p-1 text-center align-middle focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+          "group/day relative p-0 text-center w-[14.28%] focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
           defaultClassNames.day
         ),
         range_start: cn(
