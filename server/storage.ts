@@ -1,10 +1,11 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
-  users, leads, activities,
+  users, leads, activities, emailConfigs,
   type User, type InsertUser,
   type Lead, type InsertLead,
   type Activity, type InsertActivity,
+  type EmailConfig, type InsertEmailConfig,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -23,6 +24,10 @@ export interface IStorage {
   getActivities(leadId: string): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<Activity>;
   updateActivity(id: string, text: string): Promise<Activity | undefined>;
+
+  getEmailConfig(): Promise<EmailConfig | undefined>;
+  saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
+  updateEmailConfig(id: string, data: Partial<EmailConfig>): Promise<EmailConfig | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -88,6 +93,34 @@ export class DatabaseStorage implements IStorage {
       .update(activities)
       .set({ text, updatedAt: new Date().toISOString() })
       .where(eq(activities.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getEmailConfig(): Promise<EmailConfig | undefined> {
+    const [config] = await db.select().from(emailConfigs).limit(1);
+    return config;
+  }
+
+  async saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    const existing = await this.getEmailConfig();
+    if (existing) {
+      const [updated] = await db
+        .update(emailConfigs)
+        .set({ ...config, updatedAt: new Date().toISOString() })
+        .where(eq(emailConfigs.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(emailConfigs).values(config).returning();
+    return created;
+  }
+
+  async updateEmailConfig(id: string, data: Partial<EmailConfig>): Promise<EmailConfig | undefined> {
+    const [updated] = await db
+      .update(emailConfigs)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .where(eq(emailConfigs.id, id))
       .returning();
     return updated;
   }

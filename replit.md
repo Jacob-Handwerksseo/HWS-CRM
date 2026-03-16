@@ -15,7 +15,8 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - `server/db.ts` — Database connection via @neondatabase/serverless
 - `server/storage.ts` — DatabaseStorage class implementing IStorage interface
 - `server/auth.ts` — Session auth: login/logout/me/profile routes, requireAuth middleware, user seeding
-- `server/routes.ts` — REST API: /api/leads, /api/leads/:id/activities, /api/activities/:id, /api/seed (all protected with requireAuth)
+- `server/routes.ts` — REST API: /api/leads, /api/leads/:id/activities, /api/activities/:id, /api/email-config, /api/seed (all protected with requireAuth)
+- `server/email-service.ts` — IMAP email polling service: connects to mailbox every 5 min, auto-creates leads from emails
 - `client/src/lib/app-state.tsx` — React context + TanStack Query for API-driven state, auth state
 - `client/src/lib/queryClient.ts` — Query client with apiRequest helper
 
@@ -41,7 +42,8 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - **Lead**: id (UUID), name, role, company, status (enum), source (enum), assignedTo (user UUID), lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
 - **Activity**: id (UUID), leadId (FK), type (comment/system), text, authorId, timestamp, updatedAt
 - **LeadStatus**: Neu, Erstkontakt, Setting, Closing, Wiedervorlage, Verlorener Lead
-- **LeadSource**: Google Ads, Organisch, Tool-Import, Manuell
+- **EmailConfig**: id (UUID), imapServer, imapPort, email, password, enabled, lastCheckedUid, createdAt, updatedAt
+- **LeadSource**: Google Ads, Organisch, Tool-Import, Manuell, E-Mail
 
 ## Design Notes
 - Minimal SaaS, Inter font, light theme, color-coded status badges

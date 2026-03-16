@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, pgEnum, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,6 +17,7 @@ export const leadSourceEnum = pgEnum("lead_source", [
   "Organisch",
   "Tool-Import",
   "Manuell",
+  "E-Mail",
 ]);
 
 export const activityTypeEnum = pgEnum("activity_type", [
@@ -59,6 +60,28 @@ export const activities = pgTable("activities", {
   updatedAt: timestamp("updated_at", { mode: "string" }),
 });
 
+export const emailConfigs = pgTable("email_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  imapServer: text("imap_server").notNull(),
+  imapPort: integer("imap_port").notNull().default(993),
+  email: text("email").notNull(),
+  password: text("password").notNull(),
+  enabled: boolean("enabled").notNull().default(false),
+  lastCheckedUid: text("last_checked_uid"),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }),
+});
+
+export const insertEmailConfigSchema = createInsertSchema(emailConfigs).omit({
+  id: true,
+  lastCheckedUid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailConfig = typeof emailConfigs.$inferSelect;
+export type InsertEmailConfig = z.infer<typeof insertEmailConfigSchema>;
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   name: true,
@@ -84,4 +107,4 @@ export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
-export type LeadSource = "Google Ads" | "Organisch" | "Tool-Import" | "Manuell";
+export type LeadSource = "Google Ads" | "Organisch" | "Tool-Import" | "Manuell" | "E-Mail";
