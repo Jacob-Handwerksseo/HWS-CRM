@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { setupAuth, seedUsers } from "./auth";
 import { startEmailPolling } from "./email-service";
 import { storage } from "./storage";
+import { runMigrations } from "./migrate";
 
 const app = express();
 const httpServer = createServer(app);
@@ -63,6 +64,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await runMigrations();
   setupAuth(app);
   await seedUsers();
   await registerRoutes(httpServer, app);
