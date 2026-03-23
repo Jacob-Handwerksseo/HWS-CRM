@@ -3,8 +3,6 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth, seedUsers } from "./auth";
-import { startEmailPolling } from "./email-service";
-import { storage } from "./storage";
 import { runMigrations } from "./migrate";
 
 const app = express();
@@ -68,11 +66,6 @@ app.use((req, res, next) => {
   setupAuth(app);
   await seedUsers();
   await registerRoutes(httpServer, app);
-
-  const emailConfig = await storage.getEmailConfig();
-  if (emailConfig?.enabled) {
-    startEmailPolling();
-  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

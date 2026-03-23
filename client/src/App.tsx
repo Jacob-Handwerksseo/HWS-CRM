@@ -8,7 +8,6 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import Leads from "@/pages/Leads";
 import Customers from "@/pages/Customers";
-import EmailInbox from "@/pages/EmailInbox";
 import Import from "@/pages/Import";
 import Profile from "@/pages/Profile";
 import ActiveLeads from "@/pages/ActiveLeads";
@@ -25,7 +24,6 @@ function AuthenticatedRoutes() {
       <Route path="/active-leads" component={ActiveLeads} />
       <Route path="/lost-leads" component={LostLeads} />
       <Route path="/customers" component={Customers} />
-      <Route path="/email-inbox" component={EmailInbox} />
       <Route path="/import" component={Import} />
       <Route path="/profile" component={Profile} />
       <Route component={NotFound} />

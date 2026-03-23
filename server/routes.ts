@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertActivitySchema } from "@shared/schema";
 import { z } from "zod";
 import { requireAuth } from "./auth";
-import { startEmailPolling, stopEmailPolling, testEmailConnection, checkForNewEmails } from "./email-service";
+
 
 export async function registerRoutes(
   httpServer: Server,
@@ -123,80 +123,6 @@ export async function registerRoutes(
       res.json({ success: true, updated: count });
     } catch (error) {
       res.status(500).json({ message: "Bulk-Update fehlgeschlagen" });
-    }
-  });
-
-  app.get("/api/email-config", requireAuth, async (_req, res) => {
-    try {
-      const config = await storage.getEmailConfig();
-      if (!config) return res.json(null);
-      res.json({
-        id: config.id,
-        imapServer: config.imapServer,
-        imapPort: config.imapPort,
-        email: config.email,
-        enabled: config.enabled,
-        lastCheckedUid: config.lastCheckedUid,
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Fehler beim Laden der E-Mail-Konfiguration" });
-    }
-  });
-
-  app.post("/api/email-config", requireAuth, async (req, res) => {
-    try {
-      const { imapServer, imapPort, email, password, enabled } = req.body;
-      if (!imapServer || !email || !password) {
-        return res.status(400).json({ message: "Alle Felder sind erforderlich" });
-      }
-
-      const config = await storage.saveEmailConfig({
-        imapServer,
-        imapPort: imapPort || 993,
-        email,
-        password,
-        enabled: enabled ?? false,
-      });
-
-      if (config.enabled) {
-        startEmailPolling();
-      } else {
-        stopEmailPolling();
-      }
-
-      res.json({
-        id: config.id,
-        imapServer: config.imapServer,
-        imapPort: config.imapPort,
-        email: config.email,
-        enabled: config.enabled,
-      });
-    } catch (error) {
-      console.error("Email config error:", error);
-      res.status(500).json({ message: "Fehler beim Speichern der E-Mail-Konfiguration" });
-    }
-  });
-
-  app.post("/api/email-config/test", requireAuth, async (req, res) => {
-    try {
-      const { imapServer, imapPort, email, password } = req.body;
-      if (!imapServer || !email || !password) {
-        return res.status(400).json({ message: "Alle Felder sind erforderlich" });
-      }
-
-      const result = await testEmailConnection(imapServer, imapPort || 993, email, password);
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Verbindungstest fehlgeschlagen" });
-    }
-  });
-
-  app.post("/api/email-config/check-now", requireAuth, async (_req, res) => {
-    try {
-      await checkForNewEmails();
-      res.json({ success: true, message: "E-Mails wurden geprüft" });
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Prüfung fehlgeschlagen" });
     }
   });
 

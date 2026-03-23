@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Users2, Settings, Import } from "lucide-react";
+import { LayoutDashboard, Users, Users2, Import } from "lucide-react";
 import logoUrl from "@assets/Logo__1772444817188.png";
 
 export function Sidebar() {
@@ -24,7 +24,6 @@ export function Sidebar() {
     {
       title: "System",
       items: [
-        { href: "/email-inbox", icon: Settings, label: "E-Mail Postfach" },
         { href: "/import", icon: Import, label: "Import" },
       ]
     }

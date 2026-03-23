@@ -287,12 +287,24 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Globe className="w-3.5 h-3.5" /> Website
                 </label>
-                <InlineEdit 
-                  value={lead.website}
-                  isEditingMode={isEditingMode}
-                  onSave={(val) => updateLeadField(lead.id, "website", val)}
-                  className="text-primary hover:underline"
-                />
+                {isEditingMode ? (
+                  <InlineEdit
+                    value={lead.website}
+                    isEditingMode={isEditingMode}
+                    onSave={(val) => updateLeadField(lead.id, "website", val)}
+                  />
+                ) : lead.website ? (
+                  <a
+                    href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline py-1.5 block break-all"
+                  >
+                    {lead.website}
+                  </a>
+                ) : (
+                  <div className="py-1.5 text-sm text-muted-foreground italic">Leer</div>
+                )}
               </div>
             </div>
 
