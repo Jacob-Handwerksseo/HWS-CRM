@@ -157,8 +157,8 @@ export default function LostLeads() {
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-foreground">{lead.name}</div>
-                          <div className="text-sm text-muted-foreground">{lead.company}</div>
+                          <div className="font-medium text-foreground">{lead.company || lead.name}</div>
+                          <div className="text-sm text-muted-foreground">{lead.name}</div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusColors[lead.status] || ""}>

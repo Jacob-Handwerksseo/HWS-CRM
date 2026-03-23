@@ -241,8 +241,8 @@ export default function Leads() {
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-foreground">{lead.name}</div>
-                          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{lead.company}</div>
+                          <div className="font-medium text-foreground truncate max-w-[200px]">{lead.company || lead.name}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{lead.name}</div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusColors[lead.status] || ""}>
