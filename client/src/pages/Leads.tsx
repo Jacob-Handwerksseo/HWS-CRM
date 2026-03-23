@@ -51,8 +51,7 @@ export default function Leads() {
   const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.has(id));
   const someSelected = selectedIds.size > 0;
 
-  const toggleSelect = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -231,11 +230,13 @@ export default function Leads() {
                         className={`cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedLeadId(lead.id)}
                       >
-                        <TableCell onClick={e => e.stopPropagation()}>
+                        <TableCell
+                          onClick={e => { e.stopPropagation(); toggleSelect(lead.id); }}
+                          className="cursor-default"
+                        >
                           <Checkbox
                             checked={isSelected}
-                            onCheckedChange={() => toggleSelect(lead.id, { stopPropagation: () => {} } as any)}
-                            onClick={e => toggleSelect(lead.id, e)}
+                            onCheckedChange={() => {}}
                             data-testid={`checkbox-lead-${lead.id}`}
                           />
                         </TableCell>

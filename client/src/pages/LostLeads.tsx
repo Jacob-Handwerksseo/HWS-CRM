@@ -147,11 +147,13 @@ export default function LostLeads() {
                         className={`cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedLeadId(lead.id)}
                       >
-                        <TableCell onClick={e => e.stopPropagation()}>
+                        <TableCell
+                          onClick={e => { e.stopPropagation(); toggleSelect(lead.id); }}
+                          className="cursor-default"
+                        >
                           <Checkbox
                             checked={isSelected}
-                            onCheckedChange={() => toggleSelect(lead.id)}
-                            onClick={e => e.stopPropagation()}
+                            onCheckedChange={() => {}}
                           />
                         </TableCell>
                         <TableCell>
