@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Trash2, UserCheck, X } from "lucide-react";
+import { Trash2, UserCheck, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const statusColors: Record<string, string> = {
@@ -29,8 +29,34 @@ export default function LostLeads() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [sortCol, setSortCol] = useState<"lastContact" | "createdAt">("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const filteredLeads = leads.filter(lead => lead.status === "Verlorener Lead");
+  const handleSort = (col: "lastContact" | "createdAt") => {
+    if (sortCol === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(col);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: "lastContact" | "createdAt" }) => {
+    if (sortCol !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
+  };
+
+  const filteredLeads = leads
+    .filter(lead => lead.status === "Verlorener Lead")
+    .sort((a, b) => {
+      const valA = a[sortCol] ? new Date(a[sortCol]!).getTime() : null;
+      const valB = b[sortCol] ? new Date(b[sortCol]!).getTime() : null;
+      if (valA === null && valB === null) return 0;
+      if (valA === null) return 1;
+      if (valB === null) return -1;
+      return sortDir === "asc" ? valA - valB : valB - valA;
+    });
+
   const allVisibleIds = filteredLeads.map(l => l.id);
   const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.has(id));
   const someSelected = selectedIds.size > 0;
@@ -127,13 +153,28 @@ export default function LostLeads() {
                   <TableHead className="font-semibold h-12">Status</TableHead>
                   <TableHead className="font-semibold h-12">Quelle</TableHead>
                   <TableHead className="font-semibold h-12">Zuständig</TableHead>
-                  <TableHead className="font-semibold h-12 text-right">Letzter Kontakt</TableHead>
+                  <TableHead
+                    className="font-semibold h-12 cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("lastContact")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Letzter Kontakt <SortIcon col="lastContact" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="font-semibold h-12 cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Erstellt am <SortIcon col="createdAt" />
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLeads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                       Keine verlorenen Leads gefunden.
                     </TableCell>
                   </TableRow>
@@ -184,11 +225,16 @@ export default function LostLeads() {
                             <span className="text-sm text-muted-foreground italic">Nicht zugewiesen</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <span className="text-sm text-muted-foreground whitespace-nowrap">
                             {lead.lastContact
-                              ? format(new Date(lead.lastContact), "dd.MM.yyyy HH:mm", { locale: de })
+                              ? format(new Date(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
                               : "-"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">
+                            {format(new Date(lead.createdAt), "dd.MM.yy", { locale: de })}
                           </span>
                         </TableCell>
                       </TableRow>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MoreHorizontal, ArrowUpDown, Trash2, UserCheck, X, CheckSquare } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Trash2, UserCheck, X, CheckSquare } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,22 @@ export default function Leads() {
   const [activeAssigneeFilter, setActiveAssigneeFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [sortCol, setSortCol] = useState<"nextFollowUp" | "lastContact" | "createdAt" | null>("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const handleSort = (col: "nextFollowUp" | "lastContact" | "createdAt") => {
+    if (sortCol === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(col);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: "nextFollowUp" | "lastContact" | "createdAt" }) => {
+    if (sortCol !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
+  };
 
   const filteredLeads = leads.filter(lead => {
     if (lead.status !== "Neu") return false;
@@ -45,6 +61,14 @@ export default function Leads() {
       if (lead.assignedTo !== activeAssigneeFilter) return false;
     }
     return true;
+  }).sort((a, b) => {
+    if (!sortCol) return 0;
+    const valA = a[sortCol] ? new Date(a[sortCol]!).getTime() : null;
+    const valB = b[sortCol] ? new Date(b[sortCol]!).getTime() : null;
+    if (valA === null && valB === null) return 0;
+    if (valA === null) return 1;
+    if (valB === null) return -1;
+    return sortDir === "asc" ? valA - valB : valB - valA;
   });
 
   const allVisibleIds = filteredLeads.map(l => l.id);
@@ -207,9 +231,30 @@ export default function Leads() {
                   <TableHead>Status</TableHead>
                   <TableHead>Quelle</TableHead>
                   <TableHead>Zuweisung</TableHead>
-                  <TableHead>Frist</TableHead>
-                  <TableHead>Letzter Kontakt</TableHead>
-                  <TableHead>Erstellt am</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("nextFollowUp")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Frist <SortIcon col="nextFollowUp" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("lastContact")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Letzter Kontakt <SortIcon col="lastContact" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Erstellt am <SortIcon col="createdAt" />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
               </TableHeader>
