@@ -17,7 +17,7 @@ export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     company: "",
-    source: "Manuell",
+    source: "Tool-Import",
     assignedTo: currentUser?.id || "unassigned"
   });
 
@@ -44,7 +44,7 @@ export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
     setFormData({
       name: "",
       company: "",
-      source: "Manuell",
+      source: "Tool-Import",
       assignedTo: currentUser?.id || "unassigned"
     });
     
@@ -94,10 +94,9 @@ export function NewLeadModal({ open, onClose }: NewLeadModalProps) {
                   <SelectValue placeholder="Quelle wählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Manuell">Manuell</SelectItem>
-                  <SelectItem value="Google Ads">Google Ads</SelectItem>
-                  <SelectItem value="Organisch">Organisch</SelectItem>
                   <SelectItem value="Tool-Import">Tool-Import</SelectItem>
+                  <SelectItem value="Website Leads">Website Leads</SelectItem>
+                  <SelectItem value="Video-Analyse">Video-Analyse</SelectItem>
                 </SelectContent>
               </Select>
             </div>

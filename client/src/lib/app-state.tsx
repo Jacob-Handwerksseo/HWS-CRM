@@ -9,7 +9,7 @@ export type User = {
 };
 
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
-export type LeadSource = "Google Ads" | "Organisch" | "Tool-Import" | "Manuell" | "E-Mail";
+export type LeadSource = "Tool-Import" | "Website Leads" | "Video-Analyse";
 
 export type Activity = {
   id: string;

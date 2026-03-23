@@ -36,9 +36,9 @@ export default function Leads() {
 
   const filteredLeads = leads.filter(lead => {
     if (lead.status !== "Neu") return false;
-    if (activeTab === "google-ads" && lead.source !== "Google Ads") return false;
-    if (activeTab === "import" && lead.source !== "Tool-Import") return false;
-    if (activeTab === "manual" && lead.source !== "Manuell") return false;
+    if (activeTab === "tool-import" && lead.source !== "Tool-Import") return false;
+    if (activeTab === "website-leads" && lead.source !== "Website Leads") return false;
+    if (activeTab === "video-analyse" && lead.source !== "Video-Analyse") return false;
     if (activeAssigneeFilter === "mine" && lead.assignedTo !== currentUser?.id) return false;
     if (activeAssigneeFilter === "unassigned" && lead.assignedTo !== null) return false;
     if (activeAssigneeFilter !== "all" && activeAssigneeFilter !== "mine" && activeAssigneeFilter !== "unassigned") {
@@ -116,22 +116,22 @@ export default function Leads() {
                     {leads.filter(l => l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="google-ads" className="flex gap-2">
-                  Google Ads
-                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
-                    {leads.filter(l => l.source === "Google Ads" && l.status === "Neu").length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="import" className="flex gap-2">
+                <TabsTrigger value="tool-import" className="flex gap-2">
                   Tool-Import
                   <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
                     {leads.filter(l => l.source === "Tool-Import" && l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="manual" className="flex gap-2">
-                  Manuell
+                <TabsTrigger value="website-leads" className="flex gap-2">
+                  Website Leads
                   <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
-                    {leads.filter(l => l.source === "Manuell" && l.status === "Neu").length}
+                    {leads.filter(l => l.source === "Website Leads" && l.status === "Neu").length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="video-analyse" className="flex gap-2">
+                  Video-Analyse
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                    {leads.filter(l => l.source === "Video-Analyse" && l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
               </TabsList>

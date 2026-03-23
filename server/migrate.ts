@@ -22,13 +22,6 @@ export async function runMigrations() {
       END $$;
 
       DO $$ BEGIN
-        CREATE TYPE lead_source AS ENUM (
-          'Google Ads', 'Organisch', 'Tool-Import', 'Manuell', 'E-Mail'
-        );
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$;
-
-      DO $$ BEGIN
         CREATE TYPE activity_type AS ENUM ('comment', 'system');
       EXCEPTION WHEN duplicate_object THEN NULL;
       END $$;
@@ -46,7 +39,7 @@ export async function runMigrations() {
         role TEXT DEFAULT '',
         company TEXT DEFAULT '',
         status lead_status NOT NULL DEFAULT 'Neu',
-        source lead_source NOT NULL DEFAULT 'Manuell',
+        source TEXT NOT NULL DEFAULT 'Tool-Import',
         assigned_to VARCHAR REFERENCES users(id) ON DELETE SET NULL,
         last_contact TIMESTAMP,
         next_follow_up TIMESTAMP,
@@ -85,6 +78,23 @@ export async function runMigrations() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP
       );
+    `);
+
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'leads' AND column_name = 'source' AND udt_name = 'lead_source'
+        ) THEN
+          ALTER TABLE leads ALTER COLUMN source TYPE TEXT;
+        END IF;
+      END $$;
+    `);
+
+    await pool.query(`
+      UPDATE leads SET source = 'Website Leads' WHERE source = 'Google Ads';
+      UPDATE leads SET source = 'Video-Analyse' WHERE source IN ('Manuell', 'Organisch', 'E-Mail');
     `);
 
     console.log("[migrate] Datenbanktabellen erfolgreich erstellt/geprüft");

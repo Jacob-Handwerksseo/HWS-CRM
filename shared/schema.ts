@@ -12,14 +12,6 @@ export const leadStatusEnum = pgEnum("lead_status", [
   "Verlorener Lead",
 ]);
 
-export const leadSourceEnum = pgEnum("lead_source", [
-  "Google Ads",
-  "Organisch",
-  "Tool-Import",
-  "Manuell",
-  "E-Mail",
-]);
-
 export const activityTypeEnum = pgEnum("activity_type", [
   "comment",
   "system",
@@ -38,7 +30,7 @@ export const leads = pgTable("leads", {
   role: text("role"),
   company: text("company").notNull(),
   status: leadStatusEnum("status").notNull().default("Neu"),
-  source: leadSourceEnum("source").notNull().default("Manuell"),
+  source: text("source").notNull().default("Tool-Import"),
   assignedTo: text("assigned_to"),
   lastContact: timestamp("last_contact", { mode: "string" }),
   nextFollowUp: timestamp("next_follow_up", { mode: "string" }),
@@ -107,4 +99,4 @@ export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
-export type LeadSource = "Google Ads" | "Organisch" | "Tool-Import" | "Manuell" | "E-Mail";
+export type LeadSource = "Tool-Import" | "Website Leads" | "Video-Analyse";
