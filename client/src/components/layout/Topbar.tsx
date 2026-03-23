@@ -1,7 +1,6 @@
 import { useAppState } from "@/lib/app-state";
-import { Search, Bell, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
+import { GlobalSearch } from "./GlobalSearch";
 
 interface TopbarProps {
   onNewLead?: () => void;
@@ -24,14 +24,7 @@ export function Topbar({ onNewLead }: TopbarProps) {
   return (
     <header className="h-16 border-b bg-background/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30">
       <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-full max-w-md hidden sm:block">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Suchen nach Leads, Firmen, Kontakten..."
-            className="w-full bg-muted/50 border-0 pl-9 focus-visible:ring-1"
-          />
-        </div>
+        <GlobalSearch />
       </div>
 
       <div className="flex items-center gap-4">

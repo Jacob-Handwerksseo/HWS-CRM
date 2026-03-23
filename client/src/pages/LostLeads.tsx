@@ -8,6 +8,11 @@ import { NewLeadModal } from "@/components/leads/NewLeadModal";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Trash2, UserCheck, X } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -19,11 +24,48 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LostLeads() {
-  const { leads, currentUser, users } = useAppState();
+  const { leads, users } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const filteredLeads = leads.filter(lead => lead.status === "Verlorener Lead");
+  const allVisibleIds = filteredLeads.map(l => l.id);
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(allVisibleIds));
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`${selectedIds.size} Lead(s) unwiderruflich löschen?`)) return;
+    setBulkLoading(true);
+    await apiRequest("POST", "/api/leads/bulk-delete", { ids: Array.from(selectedIds) });
+    await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    setSelectedIds(new Set());
+    setBulkLoading(false);
+  };
+
+  const handleBulkAssign = async (userId: string | null) => {
+    setBulkLoading(true);
+    await apiRequest("POST", "/api/leads/bulk-update", {
+      ids: Array.from(selectedIds),
+      data: { assignedTo: userId },
+    });
+    await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    setSelectedIds(new Set());
+    setBulkLoading(false);
+  };
 
   return (
     <Layout onNewLead={() => setIsNewLeadOpen(true)}>
@@ -36,10 +78,51 @@ export default function LostLeads() {
         </div>
 
         <div className="bg-card border shadow-sm rounded-xl overflow-hidden flex flex-col">
+          {someSelected && (
+            <div className="px-4 py-2.5 bg-primary/5 border-b flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-medium text-primary">{selectedIds.size} ausgewählt</span>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={bulkLoading}>
+                      <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+                      Zuweisen
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {users.map(u => (
+                      <DropdownMenuItem key={u.id} onClick={() => handleBulkAssign(u.id)}>
+                        <Avatar className="w-5 h-5 mr-2">
+                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{u.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        {u.name}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleBulkAssign(null)} className="text-muted-foreground">
+                      Zuweisung entfernen
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleBulkDelete} disabled={bulkLoading}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Löschen
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={bulkLoading}>
+                  <X className="w-3.5 h-3.5 mr-1.5" />
+                  Auswahl aufheben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-10">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                  </TableHead>
                   <TableHead className="font-semibold h-12">Name & Firma</TableHead>
                   <TableHead className="font-semibold h-12">Status</TableHead>
                   <TableHead className="font-semibold h-12">Quelle</TableHead>
@@ -50,20 +133,27 @@ export default function LostLeads() {
               <TableBody>
                 {filteredLeads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       Keine verlorenen Leads gefunden.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredLeads.map((lead) => {
                     const assignedUser = users.find(u => u.id === lead.assignedTo);
-                    
+                    const isSelected = selectedIds.has(lead.id);
                     return (
-                      <TableRow 
+                      <TableRow
                         key={lead.id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                        className={`cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedLeadId(lead.id)}
                       >
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(lead.id)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-foreground">{lead.name}</div>
                           <div className="text-sm text-muted-foreground">{lead.company}</div>
@@ -94,8 +184,8 @@ export default function LostLeads() {
                         </TableCell>
                         <TableCell className="text-right">
                           <span className="text-sm text-muted-foreground whitespace-nowrap">
-                            {lead.lastContact 
-                              ? format(new Date(lead.lastContact), "dd.MM.yyyy HH:mm", { locale: de }) 
+                            {lead.lastContact
+                              ? format(new Date(lead.lastContact), "dd.MM.yyyy HH:mm", { locale: de })
                               : "-"}
                           </span>
                         </TableCell>
@@ -105,6 +195,10 @@ export default function LostLeads() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="p-4 border-t bg-muted/10 text-xs text-muted-foreground">
+            {filteredLeads.length} verlorene Leads
           </div>
         </div>
       </div>

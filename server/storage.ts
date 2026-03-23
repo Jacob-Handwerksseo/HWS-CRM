@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, leads, activities, emailConfigs,
@@ -28,6 +28,9 @@ export interface IStorage {
   getEmailConfig(): Promise<EmailConfig | undefined>;
   saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
   updateEmailConfig(id: string, data: Partial<EmailConfig>): Promise<EmailConfig | undefined>;
+
+  bulkDeleteLeads(ids: string[]): Promise<number>;
+  bulkUpdateLeads(ids: string[], data: Partial<InsertLead>): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -95,6 +98,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(activities.id, id))
       .returning();
     return updated;
+  }
+
+  async bulkDeleteLeads(ids: string[]): Promise<number> {
+    if (!ids.length) return 0;
+    const result = await db.delete(leads).where(inArray(leads.id, ids));
+    return ids.length;
+  }
+
+  async bulkUpdateLeads(ids: string[], data: Partial<InsertLead>): Promise<number> {
+    if (!ids.length) return 0;
+    await db.update(leads).set(data).where(inArray(leads.id, ids));
+    return ids.length;
   }
 
   async getEmailConfig(): Promise<EmailConfig | undefined> {

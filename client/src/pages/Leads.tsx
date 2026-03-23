@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MoreHorizontal, ArrowUpDown } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, ArrowUpDown, Trash2, UserCheck, X, CheckSquare } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { LeadDeadline } from "@/components/leads/LeadDeadline";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -29,24 +31,64 @@ export default function Leads() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [activeAssigneeFilter, setActiveAssigneeFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const filteredLeads = leads.filter(lead => {
-    // Only show 'Neu' leads here
     if (lead.status !== "Neu") return false;
-
-    // Filter by source
     if (activeTab === "google-ads" && lead.source !== "Google Ads") return false;
     if (activeTab === "import" && lead.source !== "Tool-Import") return false;
     if (activeTab === "manual" && lead.source !== "Manuell") return false;
-    
     if (activeAssigneeFilter === "mine" && lead.assignedTo !== currentUser?.id) return false;
     if (activeAssigneeFilter === "unassigned" && lead.assignedTo !== null) return false;
     if (activeAssigneeFilter !== "all" && activeAssigneeFilter !== "mine" && activeAssigneeFilter !== "unassigned") {
       if (lead.assignedTo !== activeAssigneeFilter) return false;
     }
-
     return true;
   });
+
+  const allVisibleIds = filteredLeads.map(l => l.id);
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0;
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allVisibleIds));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`${selectedIds.size} Lead(s) unwiderruflich löschen?`)) return;
+    setBulkLoading(true);
+    await apiRequest("POST", "/api/leads/bulk-delete", { ids: Array.from(selectedIds) });
+    await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    setSelectedIds(new Set());
+    setBulkLoading(false);
+  };
+
+  const handleBulkAssign = async (userId: string | null) => {
+    setBulkLoading(true);
+    await apiRequest("POST", "/api/leads/bulk-update", {
+      ids: Array.from(selectedIds),
+      data: { assignedTo: userId },
+    });
+    await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    setSelectedIds(new Set());
+    setBulkLoading(false);
+  };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -71,26 +113,26 @@ export default function Leads() {
               <TabsList className="bg-background border shadow-sm">
                 <TabsTrigger value="all" className="flex gap-2">
                   Alle Leads
-                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
-                    {leads.length}
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                    {leads.filter(l => l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="google-ads" className="flex gap-2">
                   Google Ads
-                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
-                    {leads.filter(l => l.source === "Google Ads").length}
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                    {leads.filter(l => l.source === "Google Ads" && l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="import" className="flex gap-2">
                   Tool-Import
-                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
-                    {leads.filter(l => l.source === "Tool-Import").length}
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                    {leads.filter(l => l.source === "Tool-Import" && l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="manual" className="flex gap-2">
                   Manuell
-                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20">
-                    {leads.filter(l => l.source === "Manuell").length}
+                  <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                    {leads.filter(l => l.source === "Manuell" && l.status === "Neu").length}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -108,10 +150,56 @@ export default function Leads() {
             </Tabs>
           </div>
 
+          {someSelected && (
+            <div className="px-4 py-2.5 bg-primary/5 border-b flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-medium text-primary">{selectedIds.size} ausgewählt</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={bulkLoading} data-testid="button-bulk-assign">
+                      <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+                      Zuweisen
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {users.map(u => (
+                      <DropdownMenuItem key={u.id} onClick={() => handleBulkAssign(u.id)}>
+                        <Avatar className="w-5 h-5 mr-2">
+                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{u.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        {u.name}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleBulkAssign(null)} className="text-muted-foreground">
+                      Zuweisung entfernen
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleBulkDelete} disabled={bulkLoading} data-testid="button-bulk-delete">
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Löschen
+                </Button>
+                <Button size="sm" variant="ghost" onClick={clearSelection} disabled={bulkLoading}>
+                  <X className="w-3.5 h-3.5 mr-1.5" />
+                  Auswahl aufheben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/30 hover:bg-muted/30">
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleAll}
+                      data-testid="checkbox-select-all"
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
                   <TableHead className="w-[250px]">
                     <div className="flex items-center gap-1 cursor-pointer hover:text-foreground">
                       Name / Firma <ArrowUpDown className="w-3 h-3" />
@@ -129,20 +217,28 @@ export default function Leads() {
               <TableBody>
                 {filteredLeads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                       Keine Leads in dieser Ansicht gefunden.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredLeads.map((lead) => {
                     const assignee = users.find(u => u.id === lead.assignedTo);
-                    
+                    const isSelected = selectedIds.has(lead.id);
                     return (
-                      <TableRow 
-                        key={lead.id} 
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      <TableRow
+                        key={lead.id}
+                        className={`cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedLeadId(lead.id)}
                       >
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(lead.id, { stopPropagation: () => {} } as any)}
+                            onClick={e => toggleSelect(lead.id, e)}
+                            data-testid={`checkbox-lead-${lead.id}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-foreground">{lead.name}</div>
                           <div className="text-sm text-muted-foreground truncate max-w-[200px]">{lead.company}</div>
@@ -166,15 +262,15 @@ export default function Leads() {
                               <span className="text-sm truncate max-w-[120px]">{assignee.name}</span>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground italic">Unassigned</span>
+                            <span className="text-sm text-muted-foreground italic">Nicht zugewiesen</span>
                           )}
                         </TableCell>
                         <TableCell>
                           <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {lead.lastContact 
-                            ? format(new Date(lead.lastContact), "dd.MM.yy HH:mm", { locale: de }) 
+                          {lead.lastContact
+                            ? format(new Date(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
                             : "-"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
@@ -183,9 +279,9 @@ export default function Leads() {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 hover:bg-background"
                                 onClick={(e) => e.stopPropagation()}
                               >
@@ -196,7 +292,7 @@ export default function Leads() {
                               <DropdownMenuItem onClick={() => setSelectedLeadId(lead.id)}>
                                 Ansehen & Bearbeiten
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={(e) => handleDelete(e as any, lead.id)}
                               >
@@ -212,17 +308,23 @@ export default function Leads() {
               </TableBody>
             </Table>
           </div>
-          
+
           <div className="p-4 border-t bg-muted/10 text-xs text-muted-foreground flex justify-between items-center">
             <span>{filteredLeads.length} Leads in dieser Ansicht</span>
+            {someSelected && (
+              <button className="text-primary hover:underline flex items-center gap-1" onClick={toggleAll}>
+                <CheckSquare className="w-3 h-3" />
+                {allSelected ? "Alle abwählen" : "Alle auswählen"}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <LeadDetailDrawer 
-        leadId={selectedLeadId} 
-        open={!!selectedLeadId} 
-        onClose={() => setSelectedLeadId(null)} 
+      <LeadDetailDrawer
+        leadId={selectedLeadId}
+        open={!!selectedLeadId}
+        onClose={() => setSelectedLeadId(null)}
       />
 
       <NewLeadModal

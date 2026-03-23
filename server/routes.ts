@@ -104,6 +104,28 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/leads/bulk-delete", requireAuth, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ message: "IDs erforderlich" });
+      const count = await storage.bulkDeleteLeads(ids);
+      res.json({ success: true, deleted: count });
+    } catch (error) {
+      res.status(500).json({ message: "Bulk-Löschen fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/leads/bulk-update", requireAuth, async (req, res) => {
+    try {
+      const { ids, data } = req.body;
+      if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ message: "IDs erforderlich" });
+      const count = await storage.bulkUpdateLeads(ids, data);
+      res.json({ success: true, updated: count });
+    } catch (error) {
+      res.status(500).json({ message: "Bulk-Update fehlgeschlagen" });
+    }
+  });
+
   app.get("/api/email-config", requireAuth, async (_req, res) => {
     try {
       const config = await storage.getEmailConfig();
