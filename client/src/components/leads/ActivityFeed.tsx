@@ -5,10 +5,10 @@ import { useAppState } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Pencil, Check, X, Clock } from "lucide-react";
+import { Send, Pencil, Check, X, Clock, Trash2 } from "lucide-react";
 
 export function ActivityFeed({ leadId }: { leadId: string }) {
-  const { leads, addActivity, updateActivity, users } = useAppState();
+  const { leads, addActivity, updateActivity, deleteActivity, users } = useAppState();
   const lead = leads.find(l => l.id === leadId);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -16,7 +16,6 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
 
   if (!lead) return null;
 
-  // Sort activities newest first
   const sortedActivities = [...lead.activities].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
@@ -33,6 +32,11 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
     setEditingId(null);
   };
 
+  const handleDelete = (activityId: string) => {
+    if (!window.confirm("Kommentar unwiderruflich löschen?")) return;
+    deleteActivity(leadId, activityId);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background rounded-xl border shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b bg-muted/20 flex items-center justify-between">
@@ -41,12 +45,12 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
           Aktivitäten & Notizen
         </h3>
       </div>
-      
+
       <div className="flex-1 overflow-auto p-5 space-y-6">
         {sortedActivities.map((activity) => {
           const author = users.find(u => u.id === activity.authorId);
           const isSystem = activity.type === "system";
-          
+
           if (isSystem) {
             return (
               <div key={activity.id} className="flex gap-4 items-center text-sm text-muted-foreground">
@@ -63,48 +67,62 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
 
           return (
             <div key={activity.id} className="flex gap-4 group">
-              <Avatar className="w-8 h-8 border mt-0.5">
+              <Avatar className="w-8 h-8 border mt-0.5 shrink-0">
                 <AvatarFallback className="text-xs bg-primary/5 text-primary">
                   {author?.name?.charAt(0).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
-              
-              <div className="flex-1 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-foreground">{author?.name || "Unbekannt"}</span>
-                    <span className="text-xs text-muted-foreground">
+
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <span className="font-medium text-foreground shrink-0">{author?.name || "Unbekannt"}</span>
+                    <span className="text-xs text-muted-foreground truncate">
                       {format(new Date(activity.timestamp), "dd. MMM yyyy, HH:mm", { locale: de })}
                       {activity.updatedAt && " (bearbeitet)"}
                     </span>
                   </div>
-                  
+
                   {!isEditing && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => {
-                        setEditingId(activity.id);
-                        setEditValue(activity.text);
-                      }}
-                    >
-                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                    </Button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          setEditingId(activity.id);
+                          setEditValue(activity.text);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(activity.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
 
                 {isEditing ? (
                   <div className="space-y-2 mt-2">
-                    <Textarea 
+                    <Textarea
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
                       className="min-h-[80px] text-sm resize-none focus-visible:ring-1"
                       autoFocus
                     />
                     <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Abbrechen</Button>
-                      <Button size="sm" onClick={() => handleSaveEdit(activity.id)}>Speichern</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                        <X className="w-3.5 h-3.5 mr-1" /> Abbrechen
+                      </Button>
+                      <Button size="sm" onClick={() => handleSaveEdit(activity.id)}>
+                        <Check className="w-3.5 h-3.5 mr-1" /> Speichern
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -116,7 +134,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
             </div>
           );
         })}
-        
+
         {sortedActivities.length === 0 && (
           <div className="text-center py-10 text-sm text-muted-foreground">
             Noch keine Aktivitäten vorhanden.
@@ -126,13 +144,13 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
 
       <div className="p-4 bg-muted/10 border-t">
         <div className="relative">
-          <Textarea 
+          <Textarea
             placeholder="Neue Notiz hinzufügen..."
             className="min-h-[80px] resize-none pb-12 text-sm"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 handleAddComment();
               }
             }}
@@ -141,9 +159,9 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
             <span className="text-[10px] text-muted-foreground hidden sm:inline-block mr-2">
               Cmd/Ctrl + Enter zum Speichern
             </span>
-            <Button 
-              size="sm" 
-              className="h-8 shadow-sm" 
+            <Button
+              size="sm"
+              className="h-8 shadow-sm"
               onClick={handleAddComment}
               disabled={!newComment.trim()}
             >

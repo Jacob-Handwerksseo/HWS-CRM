@@ -108,6 +108,16 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/activities/:id", requireAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deleteActivity(req.params.id);
+      if (!deleted) return res.status(404).json({ message: "Activity not found" });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete activity" });
+    }
+  });
+
   app.post("/api/leads/bulk-delete", requireAuth, async (req, res) => {
     try {
       const { ids } = req.body;

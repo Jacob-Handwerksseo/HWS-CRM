@@ -56,6 +56,7 @@ type AppStateContextType = {
 
   addActivity: (leadId: string, text: string) => void;
   updateActivity: (leadId: string, activityId: string, text: string) => void;
+  deleteActivity: (leadId: string, activityId: string) => void;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -213,10 +214,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         text,
         authorId: currentUser?.id || null,
       });
-      return res.json();
+      return res.json() as Promise<Activity>;
     },
-    onSuccess: () => {
-      setActivityVersion((v) => v + 1);
+    onSuccess: (newActivity: Activity) => {
+      // Optimistic: directly insert new activity into local map — no full refetch needed
+      setActivitiesMap(prev => ({
+        ...prev,
+        [newActivity.leadId]: [newActivity, ...(prev[newActivity.leadId] || [])],
+      }));
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
     },
   });
@@ -230,20 +235,42 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateActivityMutation = useMutation({
-    mutationFn: async ({ activityId, text }: { activityId: string; text: string }) => {
+    mutationFn: async ({ leadId, activityId, text }: { leadId: string; activityId: string; text: string }) => {
       const res = await apiRequest("PATCH", `/api/activities/${activityId}`, { text });
-      return res.json();
+      return res.json() as Promise<Activity>;
     },
-    onSuccess: () => {
-      setActivityVersion((v) => v + 1);
+    onSuccess: (updated: Activity, { leadId }) => {
+      setActivitiesMap(prev => ({
+        ...prev,
+        [leadId]: (prev[leadId] || []).map(a => a.id === updated.id ? updated : a),
+      }));
     },
   });
 
   const updateActivity = useCallback(
     (leadId: string, activityId: string, text: string) => {
-      updateActivityMutation.mutate({ activityId, text });
+      updateActivityMutation.mutate({ leadId, activityId, text });
     },
     [updateActivityMutation]
+  );
+
+  const deleteActivityMutation = useMutation({
+    mutationFn: async ({ activityId }: { leadId: string; activityId: string }) => {
+      await apiRequest("DELETE", `/api/activities/${activityId}`);
+    },
+    onSuccess: (_, { leadId, activityId }) => {
+      setActivitiesMap(prev => ({
+        ...prev,
+        [leadId]: (prev[leadId] || []).filter(a => a.id !== activityId),
+      }));
+    },
+  });
+
+  const deleteActivity = useCallback(
+    (leadId: string, activityId: string) => {
+      deleteActivityMutation.mutate({ leadId, activityId });
+    },
+    [deleteActivityMutation]
   );
 
   return (
@@ -261,6 +288,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         deleteLead,
         addActivity,
         updateActivity,
+        deleteActivity,
       }}
     >
       {children}

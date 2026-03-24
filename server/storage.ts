@@ -24,6 +24,7 @@ export interface IStorage {
   getActivities(leadId: string): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<Activity>;
   updateActivity(id: string, text: string): Promise<Activity | undefined>;
+  deleteActivity(id: string): Promise<boolean>;
 
   getEmailConfig(): Promise<EmailConfig | undefined>;
   saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
@@ -98,6 +99,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(activities.id, id))
       .returning();
     return updated;
+  }
+
+  async deleteActivity(id: string): Promise<boolean> {
+    const result = await db.delete(activities).where(eq(activities.id, id)).returning();
+    return result.length > 0;
   }
 
   async bulkDeleteLeads(ids: string[]): Promise<number> {
