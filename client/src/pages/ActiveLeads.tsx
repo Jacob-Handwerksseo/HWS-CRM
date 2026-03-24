@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Building2, CalendarDays } from "lucide-react";
+import { parseUTC } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -68,8 +69,8 @@ export default function ActiveLeads() {
       if (!a.nextFollowUp) return 1;
       if (!b.nextFollowUp) return -1;
       
-      const dateA = new Date(a.nextFollowUp).getTime();
-      const dateB = new Date(b.nextFollowUp).getTime();
+      const dateA = parseUTC(a.nextFollowUp).getTime();
+      const dateB = parseUTC(b.nextFollowUp).getTime();
       return dateA - dateB;
     });
 

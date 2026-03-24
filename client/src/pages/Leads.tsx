@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LeadDeadline } from "@/components/leads/LeadDeadline";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { parseUTC } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -63,8 +64,8 @@ export default function Leads() {
     return true;
   }).sort((a, b) => {
     if (!sortCol) return 0;
-    const valA = a[sortCol] ? new Date(a[sortCol]!).getTime() : null;
-    const valB = b[sortCol] ? new Date(b[sortCol]!).getTime() : null;
+    const valA = a[sortCol] ? parseUTC(a[sortCol]!).getTime() : null;
+    const valB = b[sortCol] ? parseUTC(b[sortCol]!).getTime() : null;
     if (valA === null && valB === null) return 0;
     if (valA === null) return 1;
     if (valB === null) return -1;
@@ -316,11 +317,11 @@ export default function Leads() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {lead.lastContact
-                            ? format(new Date(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
+                            ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
                             : "-"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(lead.createdAt), "dd.MM.yy", { locale: de })}
+                          {format(parseUTC(lead.createdAt), "dd.MM.yy", { locale: de })}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>

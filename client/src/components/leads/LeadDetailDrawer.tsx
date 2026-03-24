@@ -18,6 +18,7 @@ import {
   Building2, Mail, Phone, Globe, MapPin, 
   UserCircle2, Calendar, Edit3, Trash2
 } from "lucide-react";
+import { parseUTC } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -328,7 +329,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
             <div className="bg-muted/20 rounded-lg p-4 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground block text-xs mb-1">Erstellt am</span>
-                <span className="font-medium">{format(new Date(lead.createdAt), "dd.MM.yyyy HH:mm", { locale: de })}</span>
+                <span className="font-medium">{format(parseUTC(lead.createdAt), "dd.MM.yyyy HH:mm", { locale: de })}</span>
               </div>
               <div>
                 <span className="text-muted-foreground block text-xs mb-1">Quelle</span>

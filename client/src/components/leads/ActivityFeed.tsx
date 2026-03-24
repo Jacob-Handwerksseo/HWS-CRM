@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Pencil, Check, X, Clock, Trash2 } from "lucide-react";
+import { parseUTC } from "@/lib/utils";
 
 export function ActivityFeed({ leadId }: { leadId: string }) {
   const { leads, addActivity, updateActivity, deleteActivity, users } = useAppState();
@@ -17,7 +18,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
   if (!lead) return null;
 
   const sortedActivities = [...lead.activities].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => parseUTC(b.timestamp).getTime() - parseUTC(a.timestamp).getTime()
   );
 
   const handleAddComment = () => {
@@ -57,7 +58,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
                 <div className="w-2 h-2 rounded-full bg-border ml-3" />
                 <span>{activity.text}</span>
                 <span className="text-xs opacity-60">
-                  {format(new Date(activity.timestamp), "dd. MMM HH:mm", { locale: de })}
+                  {format(parseUTC(activity.timestamp), "dd. MMM HH:mm", { locale: de })}
                 </span>
               </div>
             );
@@ -78,7 +79,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
                   <div className="flex items-center gap-2 text-sm min-w-0">
                     <span className="font-medium text-foreground shrink-0">{author?.name || "Unbekannt"}</span>
                     <span className="text-xs text-muted-foreground truncate">
-                      {format(new Date(activity.timestamp), "dd. MMM yyyy, HH:mm", { locale: de })}
+                      {format(parseUTC(activity.timestamp), "dd. MMM yyyy, HH:mm", { locale: de })}
                       {activity.updatedAt && " (bearbeitet)"}
                     </span>
                   </div>

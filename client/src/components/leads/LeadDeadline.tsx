@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarDays, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, parseUTC } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,7 +19,7 @@ interface LeadDeadlineProps {
 export function getDeadlineStatus(dateString: string | null) {
   if (!dateString) return { color: "text-muted-foreground", bg: "bg-muted/50", label: "Keine Frist", status: "none" };
 
-  const date = new Date(dateString);
+  const date = parseUTC(dateString);
   const today = startOfDay(new Date());
   const deadlineDate = startOfDay(date);
 
@@ -41,7 +41,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
   const { updateLeadField } = useAppState();
   const [open, setOpen] = useState(false);
   const status = getDeadlineStatus(deadline);
-  const formattedDate = deadline ? format(new Date(deadline), "dd.MM.yyyy", { locale: de }) : "Frist setzen";
+  const formattedDate = deadline ? format(parseUTC(deadline), "dd.MM.yyyy", { locale: de }) : "Frist setzen";
 
   const handleSelect = (date: Date | undefined) => {
     updateLeadField(leadId, "nextFollowUp", date ? toNoonISO(date) : null);
@@ -52,7 +52,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
     return (
       <div className={cn("flex items-center gap-1.5 text-xs", status.color, className)}>
         {showIcon && <CalendarDays className="w-3.5 h-3.5" />}
-        {deadline ? format(new Date(deadline), "dd.MM.yyyy", { locale: de }) : ""}
+        {deadline ? format(parseUTC(deadline), "dd.MM.yyyy", { locale: de }) : ""}
       </div>
     );
   }
@@ -87,7 +87,7 @@ export function LeadDeadline({ leadId, deadline, className, showIcon = true, var
       <PopoverContent className="w-auto p-0 border shadow-lg" align="start" sideOffset={8}>
         <Calendar
           mode="single"
-          selected={deadline ? new Date(deadline) : undefined}
+          selected={deadline ? parseUTC(deadline) : undefined}
           onSelect={handleSelect}
           initialFocus
           locale={de}
