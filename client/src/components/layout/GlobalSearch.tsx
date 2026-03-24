@@ -124,12 +124,12 @@ export function GlobalSearch() {
 
   return (
     <>
-      <div ref={containerRef} className="relative w-full max-w-md hidden sm:block">
+      <div ref={containerRef} className="relative w-full max-w-xs sm:max-w-md">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
           ref={inputRef}
           type="search"
-          placeholder="Name, Firma, E-Mail, Telefon..."
+          placeholder="Suchen..."
           className="w-full bg-muted/50 border-0 pl-9 pr-8 focus-visible:ring-1"
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}

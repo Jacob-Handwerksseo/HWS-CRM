@@ -139,10 +139,10 @@ export default function Import() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <div className="p-3 sm:p-6 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Datenimport</h1>
-          <p className="text-muted-foreground mt-1">Importieren Sie Leads aus CSV oder Excel-Dateien.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Datenimport</h1>
+          <p className="text-muted-foreground mt-1 text-sm hidden sm:block">Importieren Sie Leads aus CSV oder Excel-Dateien.</p>
         </div>
 
         {!rows.length && (

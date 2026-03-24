@@ -95,11 +95,11 @@ export default function LostLeads() {
 
   return (
     <Layout onNewLead={() => setIsNewLeadOpen(true)}>
-      <div className="p-8 max-w-[1600px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="p-3 sm:p-6 md:p-8 max-w-[1600px] mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 mb-4 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Verlorene Leads</h1>
-            <p className="text-muted-foreground mt-1">Übersicht der nicht erfolgreichen Leads.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Verlorene Leads</h1>
+            <p className="text-muted-foreground mt-1 text-sm hidden sm:block">Übersicht der nicht erfolgreichen Leads.</p>
           </div>
         </div>
 

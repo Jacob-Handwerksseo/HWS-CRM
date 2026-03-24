@@ -122,18 +122,18 @@ export default function Leads() {
 
   return (
     <Layout onNewLead={() => setIsNewLeadOpen(true)}>
-      <div className="p-8 max-w-[1600px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="p-3 sm:p-6 md:p-8 max-w-[1600px] mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 mb-4 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-            <p className="text-muted-foreground mt-1">Verwalten und verfolgen Sie Ihre Verkaufschancen.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leads</h1>
+            <p className="text-muted-foreground mt-1 text-sm hidden sm:block">Verwalten und verfolgen Sie Ihre Verkaufschancen.</p>
           </div>
         </div>
 
         <div className="bg-card border shadow-sm rounded-xl overflow-hidden flex flex-col">
-          <div className="p-4 border-b bg-muted/20 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="p-2 sm:p-4 border-b bg-muted/20 flex flex-col lg:flex-row lg:items-center justify-between gap-2 sm:gap-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full lg:w-auto overflow-x-auto">
-              <TabsList className="bg-background border shadow-sm">
+              <TabsList className="bg-background border shadow-sm whitespace-nowrap">
                 <TabsTrigger value="all" className="flex gap-2">
                   Alle Leads
                   <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
@@ -162,7 +162,7 @@ export default function Leads() {
             </Tabs>
 
             <Tabs value={activeAssigneeFilter} onValueChange={setActiveAssigneeFilter} className="w-full lg:w-auto overflow-x-auto">
-              <TabsList className="bg-background border shadow-sm">
+              <TabsList className="bg-background border shadow-sm whitespace-nowrap">
                 <TabsTrigger value="all">Alle</TabsTrigger>
                 <TabsTrigger value="mine">Meine Leads</TabsTrigger>
                 <TabsTrigger value="unassigned">Nicht zugewiesen</TabsTrigger>
