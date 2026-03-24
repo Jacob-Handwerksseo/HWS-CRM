@@ -82,6 +82,10 @@ export async function registerRoutes(
         leadId: req.params.id,
       });
       const activity = await storage.createActivity(parsed);
+      // Update lastContact on the lead whenever a comment is added
+      if (parsed.type === "comment") {
+        await storage.updateLead(req.params.id, { lastContact: new Date() });
+      }
       res.status(201).json(activity);
     } catch (error) {
       if (error instanceof z.ZodError) {

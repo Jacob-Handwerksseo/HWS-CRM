@@ -217,6 +217,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     },
     onSuccess: () => {
       setActivityVersion((v) => v + 1);
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
     },
   });
 
