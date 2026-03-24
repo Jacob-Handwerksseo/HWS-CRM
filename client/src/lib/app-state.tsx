@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "./queryClient";
 
@@ -100,29 +100,31 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, Activity[]>>({});
-  const [activityVersion, setActivityVersion] = useState(0);
+
+  // Ref so the useEffect can always read the current map without being in the dependency array
+  const activitiesMapRef = useRef<Record<string, Activity[]>>({});
+  activitiesMapRef.current = activitiesMap;
+
+  // Only re-run when the set of lead IDs changes (new lead added / lead deleted)
+  // NOT when lead data changes (e.g. lastContact update after comment)
+  const leadIds = rawLeads.map(l => l.id).join(",");
 
   useEffect(() => {
-    if (rawLeads.length > 0) {
-      const fetchAllActivities = async () => {
-        const map: Record<string, Activity[]> = {};
-        await Promise.all(
-          rawLeads.map(async (lead) => {
-            try {
-              const res = await fetch(`/api/leads/${lead.id}/activities`, { credentials: "include" });
-              if (res.ok) {
-                map[lead.id] = await res.json();
-              }
-            } catch {
-              map[lead.id] = [];
-            }
-          })
-        );
-        setActivitiesMap(map);
-      };
-      fetchAllActivities();
-    }
-  }, [rawLeads, activityVersion]);
+    if (!leadIds) return;
+
+    const missingLeads = rawLeads.filter(l => !activitiesMapRef.current[l.id]);
+    if (missingLeads.length === 0) return;
+
+    missingLeads.forEach(async (lead) => {
+      try {
+        const res = await fetch(`/api/leads/${lead.id}/activities`, { credentials: "include" });
+        const acts = res.ok ? await res.json() : [];
+        setActivitiesMap(prev => ({ ...prev, [lead.id]: acts }));
+      } catch {
+        setActivitiesMap(prev => ({ ...prev, [lead.id]: [] }));
+      }
+    });
+  }, [leadIds]);
 
   const leads: LeadWithActivities[] = rawLeads.map((lead) => ({
     ...lead,
@@ -149,6 +151,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     queryClient.setQueryData(["/api/auth/me"], null);
     queryClient.clear();
+    setActivitiesMap({});
   };
 
   const createLeadMutation = useMutation({
@@ -164,8 +167,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return lead;
     },
     onSuccess: () => {
+      // Invalidate leads so the new lead appears — leadIds change will trigger activity fetch for it
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
-      setActivityVersion((v) => v + 1);
     },
   });
 
@@ -178,8 +181,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const res = await apiRequest("PATCH", `/api/leads/${id}`, data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    onSuccess: (updatedLead: Lead) => {
+      // Update only the affected lead in the cache — no full refetch, no activity reload
+      queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
+        if (!old) return old;
+        return old.map(l => l.id === updatedLead.id ? updatedLead : l);
+      });
     },
   });
 
@@ -194,8 +201,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/leads/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    onSuccess: (_, id) => {
+      // Remove lead from cache and clean up activities map
+      queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
+        if (!old) return old;
+        return old.filter(l => l.id !== id);
+      });
+      setActivitiesMap(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     },
   });
 
@@ -217,12 +233,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return res.json() as Promise<Activity>;
     },
     onSuccess: (newActivity: Activity) => {
-      // Optimistic: directly insert new activity into local map — no full refetch needed
+      // Instantly add new activity to local map — no server refetch needed
       setActivitiesMap(prev => ({
         ...prev,
         [newActivity.leadId]: [newActivity, ...(prev[newActivity.leadId] || [])],
       }));
-      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      // Update lastContact locally in the leads cache — no full refetch
+      queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
+        if (!old) return old;
+        return old.map(l =>
+          l.id === newActivity.leadId
+            ? { ...l, lastContact: newActivity.timestamp }
+            : l
+        );
+      });
     },
   });
 
