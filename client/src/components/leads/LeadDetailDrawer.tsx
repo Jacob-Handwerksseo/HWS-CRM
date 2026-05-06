@@ -6,17 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { useAppState } from "@/lib/app-state";
-import type { LeadStatus, LeadSource } from "@/lib/app-state";
+import type { LeadStatus } from "@/lib/app-state";
 import { InlineEdit } from "./InlineEdit";
 import { ActivityFeed } from "./ActivityFeed";
 import { LeadDeadline } from "./LeadDeadline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Building2, Mail, Phone, Globe, MapPin, 
-  UserCircle2, Calendar, Edit3, Trash2
+  UserCircle2, Edit3, Trash2
 } from "lucide-react";
 import { parseUTC } from "@/lib/utils";
 import {
@@ -56,7 +54,7 @@ const statusColors: Record<string, string> = {
 };
 
 export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProps) {
-  const { leads, updateLeadField, deleteLead, users } = useAppState();
+  const { leads, updateLeadField, deleteLead, users, isPartner } = useAppState();
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -65,7 +63,6 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
   if (!lead) return null;
 
   const assignedUser = users.find(u => u.id === lead.assignedTo);
-
   const statusOptions = ["Neu", "Erstkontakt", "Setting", "Closing", "Wiedervorlage", "Verlorener Lead"].map(s => ({ label: s, value: s }));
   const userOptions = [{ label: "Nicht zugewiesen", value: "unassigned" }, ...users.map(u => ({ label: u.name, value: u.id }))];
 
@@ -74,6 +71,9 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
     setIsDeleteDialogOpen(false);
     onClose();
   };
+
+  // For partners: editing mode is always off and cannot be toggled
+  const effectiveEditingMode = isPartner ? false : isEditingMode;
 
   return (
     <Sheet open={open} onOpenChange={(o) => {
@@ -88,71 +88,100 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Badge variant="outline" className={`h-8 px-3 text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity border-transparent ${statusColors[lead.status] || ""}`}>
-                      {lead.status}
-                    </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuLabel>Status ändern</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {statusOptions.map((opt) => (
-                      <DropdownMenuItem 
-                        key={opt.value} 
-                        onClick={() => updateLeadField(lead.id, "status", opt.value as LeadStatus)}
-                        className={lead.status === opt.value ? "bg-muted/50 font-medium" : ""}
-                      >
-                        {opt.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+                {/* Status badge — clickable for admins, read-only for partners */}
+                {isPartner ? (
+                  <Badge variant="outline" className={`h-8 px-3 text-sm font-medium border-transparent ${statusColors[lead.status] || ""}`}>
+                    {lead.status}
+                  </Badge>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge variant="outline" className={`h-8 px-3 text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity border-transparent ${statusColors[lead.status] || ""}`}>
+                        {lead.status}
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Status ändern</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {statusOptions.map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.value}
+                          onClick={() => updateLeadField(lead.id, "status", opt.value as LeadStatus)}
+                          className={lead.status === opt.value ? "bg-muted/50 font-medium" : ""}
+                        >
+                          {opt.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <Badge variant="outline" className="h-8 px-3 text-sm font-medium border-foreground/80 text-foreground bg-background hover:bg-muted/50 transition-colors">
                   {lead.source}
                 </Badge>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="h-8 inline-flex items-center gap-2 pl-1 pr-3 rounded-full border border-border bg-background text-sm font-medium cursor-pointer hover:bg-muted/50 transition-colors shadow-sm">
-                      {assignedUser ? (
-                        <>
-                          <Avatar className="w-6 h-6 border-none">
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                              {assignedUser.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-foreground">{assignedUser.name}</span>
-                        </>
-                      ) : (
-                        <>
-                          <UserCircle2 className="w-6 h-6 text-muted-foreground/50 ml-1" />
-                          <span className="text-muted-foreground/70">Zuweisen</span>
-                        </>
-                      )}
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuLabel>Zuständigkeit</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => updateLeadField(lead.id, "assignedTo", null)}
-                      className={!lead.assignedTo ? "bg-muted/50 font-medium" : ""}
-                    >
-                      Niemand (Nicht zugewiesen)
-                    </DropdownMenuItem>
-                    {userOptions.filter(u => u.value !== "unassigned").map((opt) => (
-                      <DropdownMenuItem 
-                        key={opt.value} 
-                        onClick={() => updateLeadField(lead.id, "assignedTo", opt.value)}
-                        className={lead.assignedTo === opt.value ? "bg-muted/50 font-medium" : ""}
+
+                {/* Assignee chip — clickable for admins, read-only for partners */}
+                {isPartner ? (
+                  <div className="h-8 inline-flex items-center gap-2 pl-1 pr-3 rounded-full border border-border bg-background text-sm font-medium shadow-sm">
+                    {assignedUser ? (
+                      <>
+                        <Avatar className="w-6 h-6 border-none">
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                            {assignedUser.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-foreground">{assignedUser.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserCircle2 className="w-6 h-6 text-muted-foreground/50 ml-1" />
+                        <span className="text-muted-foreground/70">Nicht zugewiesen</span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="h-8 inline-flex items-center gap-2 pl-1 pr-3 rounded-full border border-border bg-background text-sm font-medium cursor-pointer hover:bg-muted/50 transition-colors shadow-sm">
+                        {assignedUser ? (
+                          <>
+                            <Avatar className="w-6 h-6 border-none">
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                                {assignedUser.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-foreground">{assignedUser.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserCircle2 className="w-6 h-6 text-muted-foreground/50 ml-1" />
+                            <span className="text-muted-foreground/70">Zuweisen</span>
+                          </>
+                        )}
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Zuständigkeit</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => updateLeadField(lead.id, "assignedTo", null)}
+                        className={!lead.assignedTo ? "bg-muted/50 font-medium" : ""}
                       >
-                        {opt.label}
+                        Niemand (Nicht zugewiesen)
                       </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {userOptions.filter(u => u.value !== "unassigned").map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.value}
+                          onClick={() => updateLeadField(lead.id, "assignedTo", opt.value)}
+                          className={lead.assignedTo === opt.value ? "bg-muted/50 font-medium" : ""}
+                        >
+                          {opt.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="picker" />
               </div>
@@ -168,59 +197,57 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button 
-                variant={isEditingMode ? "secondary" : "ghost"} 
-                size="icon" 
-                className={isEditingMode ? "h-9 w-9 bg-primary/10 text-primary hover:bg-primary/20" : "h-9 w-9 text-muted-foreground hover:text-foreground"}
-                onClick={() => setIsEditingMode(!isEditingMode)}
-                title={isEditingMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
-              >
-                <Edit3 className="w-4 h-4" />
-              </Button>
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Lead unwiderruflich löschen?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Möchten Sie den Lead <strong>{lead.name}</strong> wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Daten und Aktivitäten werden entfernt.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Ja, löschen
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            {/* Edit/Delete buttons — hidden for partners */}
+            {!isPartner && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={isEditingMode ? "secondary" : "ghost"}
+                  size="icon"
+                  className={isEditingMode ? "h-9 w-9 bg-primary/10 text-primary hover:bg-primary/20" : "h-9 w-9 text-muted-foreground hover:text-foreground"}
+                  onClick={() => setIsEditingMode(!isEditingMode)}
+                  title={isEditingMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
+                >
+                  <Edit3 className="w-4 h-4" />
+                </Button>
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Lead unwiderruflich löschen?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Möchten Sie den Lead <strong>{lead.name}</strong> wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Daten und Aktivitäten werden entfernt.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Ja, löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Content Section */}
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-8 pb-20">
-            
-            {/* Status & Assignment Header (Edit Mode only or always shown?)
-                The prompt says "Zuständig und Status soll oben neben 'neu' also lead art und leadquelle nebendran stehen."
-                But they still need to be editable. Let's move the edit fields to the top.
-            */}
-            
+
             {/* Quick Info Grid */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-8">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Building2 className="w-3.5 h-3.5" /> Unternehmen
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.company}
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "company", val)}
                 />
               </div>
@@ -229,9 +256,9 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <UserCircle2 className="w-3.5 h-3.5" /> Ansprechpartner
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.name}
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "name", val)}
                 />
               </div>
@@ -240,9 +267,9 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <UserCircle2 className="w-3.5 h-3.5" /> Rolle / Position
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.role || ""}
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "role", val)}
                 />
               </div>
@@ -251,10 +278,10 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Mail className="w-3.5 h-3.5" /> E-Mail
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.email}
                   type="email"
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "email", val)}
                   copyable
                 />
@@ -264,10 +291,10 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Phone className="w-3.5 h-3.5" /> Telefon
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.phone}
                   type="tel"
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "phone", val)}
                   copyable
                 />
@@ -277,9 +304,9 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <MapPin className="w-3.5 h-3.5" /> Adresse
                 </label>
-                <InlineEdit 
+                <InlineEdit
                   value={lead.address}
-                  isEditingMode={isEditingMode}
+                  isEditingMode={effectiveEditingMode}
                   onSave={(val) => updateLeadField(lead.id, "address", val)}
                 />
               </div>
@@ -288,10 +315,10 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2">
                   <Globe className="w-3.5 h-3.5" /> Website
                 </label>
-                {isEditingMode ? (
+                {effectiveEditingMode ? (
                   <InlineEdit
                     value={lead.website}
-                    isEditingMode={isEditingMode}
+                    isEditingMode={effectiveEditingMode}
                     onSave={(val) => updateLeadField(lead.id, "website", val)}
                   />
                 ) : lead.website ? (
@@ -316,10 +343,10 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Allgemeine Notizen
               </label>
-              <InlineEdit 
+              <InlineEdit
                 value={lead.notes}
                 type="textarea"
-                isEditingMode={isEditingMode}
+                isEditingMode={effectiveEditingMode}
                 onSave={(val) => updateLeadField(lead.id, "notes", val)}
                 className="text-foreground/90 whitespace-pre-wrap"
               />
@@ -334,9 +361,6 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
               <div>
                 <span className="text-muted-foreground block text-xs mb-1">Quelle</span>
                 <span className="font-medium">{lead.source}</span>
-                {isEditingMode && (
-                  <span className="text-[10px] text-muted-foreground block mt-1">(Quelle ist schreibgeschützt)</span>
-                )}
               </div>
             </div>
 

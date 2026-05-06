@@ -7,6 +7,7 @@ import { storage } from "./storage";
 declare module "express-session" {
   interface SessionData {
     userId: string;
+    userRole: "admin" | "partner";
   }
 }
 
@@ -49,7 +50,8 @@ export function setupAuth(app: Express) {
       }
 
       req.session.userId = user.id;
-      res.json({ id: user.id, username: user.username, name: user.name });
+      req.session.userRole = user.role as "admin" | "partner";
+      res.json({ id: user.id, username: user.username, name: user.name, role: user.role });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login fehlgeschlagen" });
@@ -76,7 +78,10 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Benutzer nicht gefunden" });
     }
 
-    res.json({ id: user.id, username: user.username, name: user.name });
+    // Keep session role in sync
+    req.session.userRole = user.role as "admin" | "partner";
+
+    res.json({ id: user.id, username: user.username, name: user.name, role: user.role });
   });
 
   app.patch("/api/auth/profile", requireAuth, async (req: Request, res: Response) => {
@@ -115,7 +120,7 @@ export function setupAuth(app: Express) {
       }
 
       if (Object.keys(updateData).length === 0) {
-        return res.json({ id: user.id, username: user.username, name: user.name });
+        return res.json({ id: user.id, username: user.username, name: user.name, role: user.role });
       }
 
       const updated = await storage.updateUser(userId, updateData);
@@ -123,7 +128,7 @@ export function setupAuth(app: Express) {
         return res.status(500).json({ message: "Update fehlgeschlagen" });
       }
 
-      res.json({ id: updated.id, username: updated.username, name: updated.name });
+      res.json({ id: updated.id, username: updated.username, name: updated.name, role: updated.role });
     } catch (error) {
       console.error("Profile update error:", error);
       res.status(500).json({ message: "Profil-Update fehlgeschlagen" });
@@ -133,7 +138,7 @@ export function setupAuth(app: Express) {
   app.get("/api/users", requireAuth, async (_req: Request, res: Response) => {
     try {
       const allUsers = await storage.getAllUsers();
-      res.json(allUsers.map((u) => ({ id: u.id, username: u.username, name: u.name })));
+      res.json(allUsers.map((u) => ({ id: u.id, username: u.username, name: u.name, role: u.role })));
     } catch (error) {
       res.status(500).json({ message: "Benutzer laden fehlgeschlagen" });
     }
@@ -147,15 +152,36 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Nicht angemeldet" });
+  }
+  if (req.session.userRole !== "admin") {
+    return res.status(403).json({ message: "Keine Berechtigung" });
+  }
+  next();
+}
+
 export async function seedUsers() {
-  const existing = await storage.getAllUsers();
-  if (existing.length > 0) return;
+  // Seed each user individually — allows adding new users without wiping existing ones
+  const andre = await storage.getUserByUsername("andre");
+  if (!andre) {
+    const hash = await bcrypt.hash("andre123", 10);
+    await storage.createUser({ username: "andre", name: "André", password: hash, role: "admin" });
+    console.log("User seeded: andre/andre123");
+  }
 
-  const hash1 = await bcrypt.hash("andre123", 10);
-  const hash2 = await bcrypt.hash("jacob123", 10);
+  const jacob = await storage.getUserByUsername("jacob");
+  if (!jacob) {
+    const hash = await bcrypt.hash("jacob123", 10);
+    await storage.createUser({ username: "jacob", name: "Jacob", password: hash, role: "admin" });
+    console.log("User seeded: jacob/jacob123");
+  }
 
-  await storage.createUser({ username: "andre", name: "André", password: hash1 });
-  await storage.createUser({ username: "jacob", name: "Jacob", password: hash2 });
-
-  console.log("Users seeded: andre/andre123, jacob/jacob123");
+  const marco = await storage.getUserByUsername("marco");
+  if (!marco) {
+    const hash = await bcrypt.hash("Erfolg!26", 10);
+    await storage.createUser({ username: "marco", name: "Marco", password: hash, role: "partner" });
+    console.log("Partner user seeded: marco/Erfolg!26");
+  }
 }

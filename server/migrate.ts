@@ -26,11 +26,17 @@ export async function runMigrations() {
       EXCEPTION WHEN duplicate_object THEN NULL;
       END $$;
 
+      DO $$ BEGIN
+        CREATE TYPE user_role AS ENUM ('admin', 'partner');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         username TEXT NOT NULL UNIQUE,
         name TEXT NOT NULL,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        role user_role NOT NULL DEFAULT 'admin'
       );
 
       CREATE TABLE IF NOT EXISTS leads (
@@ -78,6 +84,11 @@ export async function runMigrations() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP
       );
+    `);
+
+    // Add role column to existing users table if it doesn't exist yet
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS role user_role NOT NULL DEFAULT 'admin';
     `);
 
     await pool.query(`

@@ -18,7 +18,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ onNewLead }: TopbarProps) {
-  const { currentUser, logout } = useAppState();
+  const { currentUser, logout, isPartner } = useAppState();
   const [, navigate] = useLocation();
 
   return (
@@ -53,7 +53,9 @@ export function Topbar({ onNewLead }: TopbarProps) {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none" data-testid="text-current-user">{currentUser?.name}</p>
-                <p className="text-xs text-muted-foreground leading-none">Angemeldet als Admin</p>
+                <p className="text-xs text-muted-foreground leading-none">
+                  {isPartner ? "Partner" : "Administrator"}
+                </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

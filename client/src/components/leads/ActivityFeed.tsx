@@ -9,7 +9,7 @@ import { Send, Pencil, Check, X, Clock, Trash2 } from "lucide-react";
 import { parseUTC } from "@/lib/utils";
 
 export function ActivityFeed({ leadId }: { leadId: string }) {
-  const { leads, addActivity, updateActivity, deleteActivity, users } = useAppState();
+  const { leads, addActivity, updateActivity, deleteActivity, users, isPartner } = useAppState();
   const lead = leads.find(l => l.id === leadId);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,7 +84,8 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
                     </span>
                   </div>
 
-                  {!isEditing && (
+                  {/* Edit/Delete buttons — hidden for partners */}
+                  {!isEditing && !isPartner && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       <Button
                         variant="ghost"
@@ -143,6 +144,7 @@ export function ActivityFeed({ leadId }: { leadId: string }) {
         )}
       </div>
 
+      {/* Comment input — visible for everyone (partners can add comments) */}
       <div className="p-4 bg-muted/10 border-t">
         <div className="relative">
           <Textarea

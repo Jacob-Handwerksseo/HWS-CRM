@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertLeadSchema, insertActivitySchema } from "@shared/schema";
 import { z } from "zod";
-import { requireAuth } from "./auth";
+import { requireAuth, requireAdmin } from "./auth";
 
 
 export async function registerRoutes(
@@ -11,9 +11,13 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.get("/api/leads", requireAuth, async (_req, res) => {
+  // GET /api/leads — partners only see their own assigned leads
+  app.get("/api/leads", requireAuth, async (req, res) => {
     try {
-      const leads = await storage.getLeads();
+      const isPartner = req.session.userRole === "partner";
+      const leads = isPartner
+        ? await storage.getLeadsByAssignee(req.session.userId!)
+        : await storage.getLeads();
       res.json(leads);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -25,13 +29,18 @@ export async function registerRoutes(
     try {
       const lead = await storage.getLead(req.params.id);
       if (!lead) return res.status(404).json({ message: "Lead not found" });
+      // Partners may only access their own leads
+      if (req.session.userRole === "partner" && lead.assignedTo !== req.session.userId) {
+        return res.status(403).json({ message: "Keine Berechtigung" });
+      }
       res.json(lead);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch lead" });
     }
   });
 
-  app.post("/api/leads", requireAuth, async (req, res) => {
+  // Partners cannot create leads
+  app.post("/api/leads", requireAdmin, async (req, res) => {
     try {
       const parsed = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead(parsed);
@@ -45,8 +54,27 @@ export async function registerRoutes(
     }
   });
 
+  // Partners can only update nextFollowUp
   app.patch("/api/leads/:id", requireAuth, async (req, res) => {
     try {
+      const isPartner = req.session.userRole === "partner";
+
+      if (isPartner) {
+        // Verify lead belongs to partner
+        const lead = await storage.getLead(req.params.id);
+        if (!lead || lead.assignedTo !== req.session.userId) {
+          return res.status(403).json({ message: "Keine Berechtigung" });
+        }
+        // Only allow nextFollowUp field for partners
+        const { nextFollowUp } = req.body;
+        if (nextFollowUp === undefined && Object.keys(req.body).length > 0) {
+          return res.status(403).json({ message: "Keine Berechtigung für dieses Feld" });
+        }
+        const updated = await storage.updateLead(req.params.id, { nextFollowUp: nextFollowUp ?? null });
+        if (!updated) return res.status(404).json({ message: "Lead not found" });
+        return res.json(updated);
+      }
+
       const lead = await storage.updateLead(req.params.id, req.body);
       if (!lead) return res.status(404).json({ message: "Lead not found" });
       res.json(lead);
@@ -56,7 +84,8 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/leads/:id", requireAuth, async (req, res) => {
+  // Partners cannot delete leads
+  app.delete("/api/leads/:id", requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteLead(req.params.id);
       if (!deleted) return res.status(404).json({ message: "Lead not found" });
@@ -68,6 +97,13 @@ export async function registerRoutes(
 
   app.get("/api/leads/:id/activities", requireAuth, async (req, res) => {
     try {
+      // Partners may only access activities for their own leads
+      if (req.session.userRole === "partner") {
+        const lead = await storage.getLead(req.params.id);
+        if (!lead || lead.assignedTo !== req.session.userId) {
+          return res.status(403).json({ message: "Keine Berechtigung" });
+        }
+      }
       const acts = await storage.getActivities(req.params.id);
       res.json(acts);
     } catch (error) {
@@ -75,14 +111,25 @@ export async function registerRoutes(
     }
   });
 
+  // Partners CAN add comments
   app.post("/api/leads/:id/activities", requireAuth, async (req, res) => {
     try {
+      // Partners may only add activities to their own leads
+      if (req.session.userRole === "partner") {
+        const lead = await storage.getLead(req.params.id);
+        if (!lead || lead.assignedTo !== req.session.userId) {
+          return res.status(403).json({ message: "Keine Berechtigung" });
+        }
+        // Partners can only add comments, not system events
+        if (req.body.type && req.body.type !== "comment") {
+          return res.status(403).json({ message: "Keine Berechtigung" });
+        }
+      }
       const parsed = insertActivitySchema.parse({
         ...req.body,
         leadId: req.params.id,
       });
       const activity = await storage.createActivity(parsed);
-      // Update lastContact on the lead whenever a comment is added
       if (parsed.type === "comment") {
         await storage.updateLead(req.params.id, { lastContact: new Date() });
       }
@@ -96,7 +143,8 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/activities/:id", requireAuth, async (req, res) => {
+  // Partners cannot edit activities
+  app.patch("/api/activities/:id", requireAdmin, async (req, res) => {
     try {
       const { text } = req.body;
       if (!text) return res.status(400).json({ message: "Text is required" });
@@ -108,7 +156,8 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/activities/:id", requireAuth, async (req, res) => {
+  // Partners cannot delete activities
+  app.delete("/api/activities/:id", requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteActivity(req.params.id);
       if (!deleted) return res.status(404).json({ message: "Activity not found" });
@@ -118,7 +167,8 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/leads/bulk-delete", requireAuth, async (req, res) => {
+  // Bulk operations — admin only
+  app.post("/api/leads/bulk-delete", requireAdmin, async (req, res) => {
     try {
       const { ids } = req.body;
       if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ message: "IDs erforderlich" });
@@ -129,7 +179,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/leads/bulk-update", requireAuth, async (req, res) => {
+  app.post("/api/leads/bulk-update", requireAdmin, async (req, res) => {
     try {
       const { ids, data } = req.body;
       if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ message: "IDs erforderlich" });

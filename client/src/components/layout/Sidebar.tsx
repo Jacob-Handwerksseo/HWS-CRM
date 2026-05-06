@@ -2,29 +2,31 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, Users2, Import } from "lucide-react";
 import logoUrl from "@assets/Logo__1772444817188.png";
+import { useAppState } from "@/lib/app-state";
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { isPartner } = useAppState();
 
   const navItems = [
     {
       title: "Sales",
       items: [
-        { href: "/leads", icon: Users, label: "Neue Leads" },
-        { href: "/active-leads", icon: LayoutDashboard, label: "Aktive Leads" },
-        { href: "/lost-leads", icon: Users2, label: "Verlorene Leads" },
+        { href: "/leads", icon: Users, label: "Neue Leads", partnerAllowed: true },
+        { href: "/active-leads", icon: LayoutDashboard, label: "Aktive Leads", partnerAllowed: false },
+        { href: "/lost-leads", icon: Users2, label: "Verlorene Leads", partnerAllowed: false },
       ]
     },
     {
       title: "Kunden",
       items: [
-        { href: "/customers", icon: Users2, label: "Kunden" },
+        { href: "/customers", icon: Users2, label: "Kunden", partnerAllowed: false },
       ]
     },
     {
       title: "System",
       items: [
-        { href: "/import", icon: Import, label: "Import" },
+        { href: "/import", icon: Import, label: "Import", partnerAllowed: false },
       ]
     }
   ];
@@ -49,6 +51,21 @@ export function Sidebar() {
             <div className="space-y-1">
               {group.items.map((item) => {
                 const isActive = location.startsWith(item.href);
+                const isLocked = isPartner && !item.partnerAllowed;
+
+                if (isLocked) {
+                  return (
+                    <div
+                      key={item.href}
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium opacity-35 cursor-not-allowed select-none"
+                      title="Kein Zugriff"
+                    >
+                      <item.icon className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{item.label}</span>
+                    </div>
+                  );
+                }
+
                 return (
                   <Link key={item.href} href={item.href}>
                     <div

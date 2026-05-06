@@ -7,43 +7,40 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS v4, shadcn/ui, TanStack Query, wouter routing
 - **Backend**: Express.js with REST API endpoints
 - **Database**: PostgreSQL with Drizzle ORM
-- **Auth**: bcrypt password hashing, express-session with connect-pg-simple
+- **Auth**: bcrypt password hashing, express-session with connect-pg-simple; role stored in session
 - **Drag & Drop**: @hello-pangea/dnd for Kanban board
 
 ## Key Files
-- `shared/schema.ts` — Drizzle schema: `leads`, `activities`, `users` tables with enums
-- `server/db.ts` — Database connection via @neondatabase/serverless
-- `server/storage.ts` — DatabaseStorage class implementing IStorage interface
-- `server/auth.ts` — Session auth: login/logout/me/profile routes, requireAuth middleware, user seeding
-- `server/routes.ts` — REST API: /api/leads, /api/leads/:id/activities, /api/activities/:id, /api/email-config, /api/seed (all protected with requireAuth)
-- `server/email-service.ts` — IMAP email polling service: connects to mailbox every 5 min, auto-creates leads from emails
-- `client/src/lib/app-state.tsx` — React context + TanStack Query for API-driven state, auth state
-- `client/src/lib/queryClient.ts` — Query client with apiRequest helper
+- `shared/schema.ts` — Drizzle schema: `leads`, `activities`, `users` tables with enums (incl. `userRoleEnum`)
+- `server/db.ts` — Database connection via node-postgres
+- `server/migrate.ts` — Startup migrations: CREATE TABLE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS
+- `server/storage.ts` — DatabaseStorage class implementing IStorage interface; `getLeadsByAssignee()`
+- `server/auth.ts` — Session auth: login/logout/me/profile routes, `requireAuth` + `requireAdmin` middlewares, user seeding
+- `server/routes.ts` — REST API with role-based access control (partners filtered/blocked)
+- `client/src/lib/app-state.tsx` — React context + TanStack Query; exposes `isPartner` boolean
 
 ## Pages
 - `/` — Redirects to /leads (if logged in) or shows login form
-- `/leads` — All leads table view (Neu status)
-- `/active-leads` — Kanban board with drag-and-drop
-- `/lost-leads` — Lost leads table
-- `/email-inbox` — IMAP email configuration page
+- `/leads` — Leads table (admin: full CRUD; partner: "Meine Leads" read-only simplified view)
+- `/active-leads` — Kanban board with drag-and-drop (admin only)
+- `/lost-leads` — Lost leads table (admin only)
+- `/customers` — Customers page
+- `/import` — Import page
 - `/profile` — Profile settings: change name, username, password
 
-## Authentication
-- Session-based auth with PostgreSQL session store
-- Login: POST /api/auth/login (username + password)
-- Logout: POST /api/auth/logout
-- Current user: GET /api/auth/me
-- Profile update: PATCH /api/auth/profile
-- Default users seeded on startup: andre/andre123, jacob/jacob123
-- All API routes protected with requireAuth middleware
+## Authentication & Roles
+- Session-based auth with PostgreSQL session store; `req.session.userRole` stored on login
+- **Admin**: full access — andre/andre123, jacob/jacob123
+- **Partner**: restricted — marco/Erfolg!26 (role=partner, seeded on startup)
+- `requireAuth` — any logged-in user; `requireAdmin` — admin only
+- Partner restrictions: only sees own assigned leads, cannot create/edit/delete leads or activities; can add comments & set deadlines
 
 ## Data Model
-- **User**: id (UUID), username (unique), name, password (bcrypt hash)
-- **Lead**: id (UUID), name, role, company, status (enum), source (enum), assignedTo (user UUID), lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
+- **User**: id (UUID), username (unique), name, password (bcrypt hash), role (admin|partner, default admin)
+- **Lead**: id (UUID), name, role, company, status (enum), source (text), assignedTo (user UUID), lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
 - **Activity**: id (UUID), leadId (FK), type (comment/system), text, authorId, timestamp, updatedAt
 - **LeadStatus**: Neu, Erstkontakt, Setting, Closing, Wiedervorlage, Verlorener Lead
-- **EmailConfig**: id (UUID), imapServer, imapPort, email, password, enabled, lastCheckedUid, createdAt, updatedAt
-- **LeadSource**: Google Ads, Organisch, Tool-Import, Manuell, E-Mail
+- **LeadSource**: Tool-Import, Website Leads, Video-Analyse
 
 ## Design Notes
 - Minimal SaaS, Inter font, light theme, color-coded status badges
@@ -51,3 +48,10 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - InlineEdit.tsx must NOT have a companion barrel file (causes runtime crash)
 - Calendar uses table-fixed + w-[14.28%] for weekday alignment
 - User avatars show first letter of name (no avatar field)
+- `parseUTC()` used everywhere for consistent timestamp parsing
+
+## Gotchas
+- Partner role: `req.session.userRole` set on login; must re-login after role change takes effect
+- Activity editing (`PATCH /api/activities/:id`) is admin-only; partners can only POST new comments
+- Bulk routes (`/api/leads/bulk-delete`, `/api/leads/bulk-update`) are admin-only
+- `ALTER TABLE users ADD COLUMN IF NOT EXISTS role` runs safely on existing DBs

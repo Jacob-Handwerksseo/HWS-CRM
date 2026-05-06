@@ -17,11 +17,14 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "system",
 ]);
 
+export const userRoleEnum = pgEnum("user_role", ["admin", "partner"]);
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   name: text("name").notNull(),
   password: text("password").notNull(),
+  role: userRoleEnum("role").notNull().default("admin"),
 });
 
 export const leads = pgTable("leads", {
@@ -78,6 +81,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   name: true,
   password: true,
+}).extend({
+  role: z.enum(["admin", "partner"]).optional(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads).omit({

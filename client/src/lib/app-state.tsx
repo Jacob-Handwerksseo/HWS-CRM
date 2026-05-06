@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "./queryClient";
 
+export type UserRole = "admin" | "partner";
+
 export type User = {
   id: string;
   username: string;
   name: string;
+  role: UserRole;
 };
 
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
@@ -43,6 +46,7 @@ export type LeadWithActivities = Lead & { activities: Activity[] };
 
 type AppStateContextType = {
   currentUser: User | null;
+  isPartner: boolean;
   isAuthLoading: boolean;
   login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
@@ -80,6 +84,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     retry: false,
   });
 
+  const isPartner = currentUser?.role === "partner";
+
   const { data: allUsers = [] } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: !!currentUser,
@@ -101,12 +107,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, Activity[]>>({});
 
-  // Ref so the useEffect can always read the current map without being in the dependency array
   const activitiesMapRef = useRef<Record<string, Activity[]>>({});
   activitiesMapRef.current = activitiesMap;
 
-  // Only re-run when the set of lead IDs changes (new lead added / lead deleted)
-  // NOT when lead data changes (e.g. lastContact update after comment)
   const leadIds = rawLeads.map(l => l.id).join(",");
 
   useEffect(() => {
@@ -167,7 +170,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return lead;
     },
     onSuccess: () => {
-      // Invalidate leads so the new lead appears — leadIds change will trigger activity fetch for it
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
     },
   });
@@ -182,7 +184,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return res.json();
     },
     onSuccess: (updatedLead: Lead) => {
-      // Update only the affected lead in the cache — no full refetch, no activity reload
       queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
         if (!old) return old;
         return old.map(l => l.id === updatedLead.id ? updatedLead : l);
@@ -202,7 +203,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       await apiRequest("DELETE", `/api/leads/${id}`);
     },
     onSuccess: (_, id) => {
-      // Remove lead from cache and clean up activities map
       queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
         if (!old) return old;
         return old.filter(l => l.id !== id);
@@ -233,12 +233,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return res.json() as Promise<Activity>;
     },
     onSuccess: (newActivity: Activity) => {
-      // Instantly add new activity to local map — no server refetch needed
       setActivitiesMap(prev => ({
         ...prev,
         [newActivity.leadId]: [newActivity, ...(prev[newActivity.leadId] || [])],
       }));
-      // Update lastContact locally in the leads cache — no full refetch
       queryClient.setQueryData(["/api/leads"], (old: Lead[] | undefined) => {
         if (!old) return old;
         return old.map(l =>
@@ -301,6 +299,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     <AppStateContext.Provider
       value={{
         currentUser: currentUser ?? null,
+        isPartner,
         isAuthLoading,
         login,
         logout,

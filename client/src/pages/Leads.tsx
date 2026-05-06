@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Leads() {
-  const { leads, currentUser, deleteLead, users } = useAppState();
+  const { leads, currentUser, isPartner, deleteLead, users } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
@@ -53,13 +53,16 @@ export default function Leads() {
 
   const filteredLeads = leads.filter(lead => {
     if (lead.status !== "Neu") return false;
-    if (activeTab === "tool-import" && lead.source !== "Tool-Import") return false;
-    if (activeTab === "website-leads" && lead.source !== "Website Leads") return false;
-    if (activeTab === "video-analyse" && lead.source !== "Video-Analyse") return false;
-    if (activeAssigneeFilter === "mine" && lead.assignedTo !== currentUser?.id) return false;
-    if (activeAssigneeFilter === "unassigned" && lead.assignedTo !== null) return false;
-    if (activeAssigneeFilter !== "all" && activeAssigneeFilter !== "mine" && activeAssigneeFilter !== "unassigned") {
-      if (lead.assignedTo !== activeAssigneeFilter) return false;
+    // Partners: backend already filters to their leads, no extra filters needed
+    if (!isPartner) {
+      if (activeTab === "tool-import" && lead.source !== "Tool-Import") return false;
+      if (activeTab === "website-leads" && lead.source !== "Website Leads") return false;
+      if (activeTab === "video-analyse" && lead.source !== "Video-Analyse") return false;
+      if (activeAssigneeFilter === "mine" && lead.assignedTo !== currentUser?.id) return false;
+      if (activeAssigneeFilter === "unassigned" && lead.assignedTo !== null) return false;
+      if (activeAssigneeFilter !== "all" && activeAssigneeFilter !== "mine" && activeAssigneeFilter !== "unassigned") {
+        if (lead.assignedTo !== activeAssigneeFilter) return false;
+      }
     }
     return true;
   }).sort((a, b) => {
@@ -121,6 +124,112 @@ export default function Leads() {
     }
   };
 
+  // ─── Partner-Ansicht ──────────────────────────────────────────────────────
+  if (isPartner) {
+    return (
+      <Layout>
+        <div className="p-3 sm:p-6 md:p-8 max-w-[1600px] mx-auto">
+          <div className="mb-4 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Meine Leads</h1>
+            <p className="text-muted-foreground mt-1 text-sm hidden sm:block">Ihre zugewiesenen Verkaufschancen.</p>
+          </div>
+
+          <div className="bg-card border shadow-sm rounded-xl overflow-hidden flex flex-col">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/30 hover:bg-muted/30">
+                  <TableRow>
+                    <TableHead className="w-[250px]">
+                      <div className="flex items-center gap-1">Name / Firma</div>
+                    </TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Quelle</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("nextFollowUp")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Frist <SortIcon col="nextFollowUp" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("lastContact")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Letzter Kontakt <SortIcon col="lastContact" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("createdAt")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Erstellt am <SortIcon col="createdAt" />
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLeads.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        Keine Leads zugewiesen.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredLeads.map((lead) => (
+                      <TableRow
+                        key={lead.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setSelectedLeadId(lead.id)}
+                      >
+                        <TableCell>
+                          <div className="font-medium text-foreground truncate max-w-[200px]">{lead.company || lead.name}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{lead.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColors[lead.status] || ""}>
+                            {lead.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">{lead.source}</span>
+                        </TableCell>
+                        <TableCell>
+                          <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {lead.lastContact
+                            ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {format(parseUTC(lead.createdAt), "dd.MM.yy", { locale: de })}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="p-4 border-t bg-muted/10 text-xs text-muted-foreground">
+              <span>{filteredLeads.length} Leads zugewiesen</span>
+            </div>
+          </div>
+        </div>
+
+        <LeadDetailDrawer
+          leadId={selectedLeadId}
+          open={!!selectedLeadId}
+          onClose={() => setSelectedLeadId(null)}
+        />
+      </Layout>
+    );
+  }
+
+  // ─── Admin-Ansicht ────────────────────────────────────────────────────────
   return (
     <Layout onNewLead={() => setIsNewLeadOpen(true)}>
       <div className="p-3 sm:p-6 md:p-8 max-w-[1600px] mx-auto">

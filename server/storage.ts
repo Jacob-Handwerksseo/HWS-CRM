@@ -16,6 +16,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
 
   getLeads(): Promise<Lead[]>;
+  getLeadsByAssignee(userId: string): Promise<Lead[]>;
   getLead(id: string): Promise<Lead | undefined>;
   createLead(lead: InsertLead): Promise<Lead>;
   updateLead(id: string, data: Partial<InsertLead>): Promise<Lead | undefined>;
@@ -61,6 +62,12 @@ export class DatabaseStorage implements IStorage {
 
   async getLeads(): Promise<Lead[]> {
     return db.select().from(leads).orderBy(desc(leads.createdAt));
+  }
+
+  async getLeadsByAssignee(userId: string): Promise<Lead[]> {
+    return db.select().from(leads)
+      .where(eq(leads.assignedTo, userId))
+      .orderBy(desc(leads.createdAt));
   }
 
   async getLead(id: string): Promise<Lead | undefined> {
