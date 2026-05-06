@@ -14,6 +14,12 @@ import ActiveLeads from "@/pages/ActiveLeads";
 import LostLeads from "@/pages/LostLeads";
 import { Loader2 } from "lucide-react";
 
+function AdminOnlyRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isPartner } = useAppState();
+  if (isPartner) return <Redirect to="/leads" />;
+  return <Component />;
+}
+
 function AuthenticatedRoutes() {
   return (
     <Switch>
@@ -21,10 +27,18 @@ function AuthenticatedRoutes() {
         <Redirect to="/leads" />
       </Route>
       <Route path="/leads" component={Leads} />
-      <Route path="/active-leads" component={ActiveLeads} />
-      <Route path="/lost-leads" component={LostLeads} />
-      <Route path="/customers" component={Customers} />
-      <Route path="/import" component={Import} />
+      <Route path="/active-leads">
+        <AdminOnlyRoute component={ActiveLeads} />
+      </Route>
+      <Route path="/lost-leads">
+        <AdminOnlyRoute component={LostLeads} />
+      </Route>
+      <Route path="/customers">
+        <AdminOnlyRoute component={Customers} />
+      </Route>
+      <Route path="/import">
+        <AdminOnlyRoute component={Import} />
+      </Route>
       <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
