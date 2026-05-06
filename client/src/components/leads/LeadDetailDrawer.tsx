@@ -93,8 +93,8 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
 
                 {/* Status badge — clickable for admins, read-only for partners */}
                 {isPartner ? (
-                  <Badge variant="outline" className={`h-8 px-3 text-sm font-medium border-transparent ${statusColors[lead.status] || ""}`}>
-                    {lead.status}
+                  <Badge variant="outline" className={`h-8 px-3 text-sm font-medium border-transparent ${lead.status === "Neu" ? statusColors["Neu"] : "bg-indigo-100 text-indigo-700"}`}>
+                    {lead.status === "Neu" ? "Neu" : "In Bearbeitung"}
                   </Badge>
                 ) : (
                   <DropdownMenu>
