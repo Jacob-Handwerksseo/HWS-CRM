@@ -64,18 +64,19 @@ export async function registerRoutes(
         if (!lead || lead.assignedTo !== req.session.userId) {
           return res.status(403).json({ message: "Keine Berechtigung" });
         }
-        const PARTNER_ALLOWED_FIELDS = ["nextFollowUp", "partnerStatus"];
+        const PARTNER_ALLOWED_FIELDS = ["nextFollowUp", "partnerStatus", "status"];
+        const partnerAllowedStatuses = ["Neu", "Erstkontakt", "Setting", "Closing", "Wiedervorlage"];
         const keys = Object.keys(req.body);
         if (keys.length === 0 || keys.some(k => !PARTNER_ALLOWED_FIELDS.includes(k))) {
-          return res.status(400).json({ message: "Nur nextFollowUp und partnerStatus dürfen aktualisiert werden" });
+          return res.status(400).json({ message: "Nur nextFollowUp, partnerStatus und Status dürfen aktualisiert werden" });
         }
-        const patch: Record<string, any> = {};
+        if (req.body.status !== undefined && !partnerAllowedStatuses.includes(req.body.status)) {
+          return res.status(400).json({ message: "Ungültiger Status" });
+        }
+        const patch: Record<string, unknown> = {};
         if ("nextFollowUp" in req.body) patch.nextFollowUp = req.body.nextFollowUp;
         if ("partnerStatus" in req.body) patch.partnerStatus = req.body.partnerStatus;
-        // Auto-advance status: Neu → Erstkontakt when partner interacts with lead
-        if (lead.status === "Neu" && "nextFollowUp" in req.body) {
-          patch.status = "Erstkontakt";
-        }
+        if (req.body.status !== undefined) patch.status = req.body.status;
         const updated = await storage.updateLead(req.params.id, patch);
         if (!updated) return res.status(404).json({ message: "Lead not found" });
         return res.json(updated);
