@@ -108,6 +108,10 @@ export async function runMigrations() {
       UPDATE leads SET source = 'Video-Analyse' WHERE source IN ('Manuell', 'Organisch', 'E-Mail');
     `);
 
+    await pool.query(`
+      ALTER TABLE leads ADD COLUMN IF NOT EXISTS partner_status TEXT;
+    `);
+
     console.log("[migrate] Datenbanktabellen erfolgreich erstellt/geprüft");
   } catch (error) {
     console.error("[migrate] Fehler bei der Migration:", error);

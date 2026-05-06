@@ -64,11 +64,15 @@ export async function registerRoutes(
         if (!lead || lead.assignedTo !== req.session.userId) {
           return res.status(403).json({ message: "Keine Berechtigung" });
         }
+        const PARTNER_ALLOWED_FIELDS = ["nextFollowUp", "partnerStatus"];
         const keys = Object.keys(req.body);
-        if (keys.length === 0 || !keys.includes("nextFollowUp") || keys.some(k => k !== "nextFollowUp")) {
-          return res.status(400).json({ message: "Nur nextFollowUp darf aktualisiert werden" });
+        if (keys.length === 0 || keys.some(k => !PARTNER_ALLOWED_FIELDS.includes(k))) {
+          return res.status(400).json({ message: "Nur nextFollowUp und partnerStatus dürfen aktualisiert werden" });
         }
-        const updated = await storage.updateLead(req.params.id, { nextFollowUp: req.body.nextFollowUp });
+        const patch: Record<string, any> = {};
+        if ("nextFollowUp" in req.body) patch.nextFollowUp = req.body.nextFollowUp;
+        if ("partnerStatus" in req.body) patch.partnerStatus = req.body.partnerStatus;
+        const updated = await storage.updateLead(req.params.id, patch);
         if (!updated) return res.status(404).json({ message: "Lead not found" });
         return res.json(updated);
       }

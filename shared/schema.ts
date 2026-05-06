@@ -42,6 +42,7 @@ export const leads = pgTable("leads", {
   website: text("website").notNull().default(""),
   address: text("address").notNull().default(""),
   notes: text("notes").notNull().default(""),
+  partnerStatus: text("partner_status"),
   createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
 });
 

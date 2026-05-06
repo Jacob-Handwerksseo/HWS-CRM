@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Trash2, UserCheck, X, CheckSquare } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Trash2, UserCheck, X, CheckSquare, CalendarCheck, ThumbsDown, Undo2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LeadDeadline } from "@/components/leads/LeadDeadline";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { parseUTC } from "@/lib/utils";
+import type { PartnerStatus } from "@/lib/app-state";
 
 const statusColors: Record<string, string> = {
   "Neu": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -27,11 +28,12 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Leads() {
-  const { leads, currentUser, isPartner, deleteLead, users } = useAppState();
+  const { leads, currentUser, isPartner, deleteLead, users, updateLeadField } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [activeAssigneeFilter, setActiveAssigneeFilter] = useState("all");
+  const [partnerTab, setPartnerTab] = useState<"leads" | "termine" | "kein_interesse">("leads");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [sortCol, setSortCol] = useState<"nextFollowUp" | "lastContact" | "createdAt" | null>("createdAt");
@@ -51,9 +53,24 @@ export default function Leads() {
     return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
   };
 
-  const filteredLeads = leads.filter(lead => {
+  const setPartnerStatus = async (e: React.MouseEvent, leadId: string, status: PartnerStatus) => {
+    e.stopPropagation();
+    updateLeadField(leadId, "partnerStatus", status);
+  };
+
+  const sortLeads = (arr: typeof leads) =>
+    [...arr].sort((a, b) => {
+      if (!sortCol) return 0;
+      const valA = a[sortCol] ? parseUTC(a[sortCol]!).getTime() : null;
+      const valB = b[sortCol] ? parseUTC(b[sortCol]!).getTime() : null;
+      if (valA === null && valB === null) return 0;
+      if (valA === null) return 1;
+      if (valB === null) return -1;
+      return sortDir === "asc" ? valA - valB : valB - valA;
+    });
+
+  const filteredLeads = sortLeads(leads.filter(lead => {
     if (lead.status !== "Neu") return false;
-    // Partners: backend already filters to their leads, no extra filters needed
     if (!isPartner) {
       if (activeTab === "tool-import" && lead.source !== "Tool-Import") return false;
       if (activeTab === "website-leads" && lead.source !== "Website Leads") return false;
@@ -65,15 +82,7 @@ export default function Leads() {
       }
     }
     return true;
-  }).sort((a, b) => {
-    if (!sortCol) return 0;
-    const valA = a[sortCol] ? parseUTC(a[sortCol]!).getTime() : null;
-    const valB = b[sortCol] ? parseUTC(b[sortCol]!).getTime() : null;
-    if (valA === null && valB === null) return 0;
-    if (valA === null) return 1;
-    if (valB === null) return -1;
-    return sortDir === "asc" ? valA - valB : valB - valA;
-  });
+  }));
 
   const allVisibleIds = filteredLeads.map(l => l.id);
   const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.has(id));
@@ -88,11 +97,8 @@ export default function Leads() {
   };
 
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(allVisibleIds));
-    }
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(allVisibleIds));
   };
 
   const clearSelection = () => setSelectedIds(new Set());
@@ -134,96 +140,164 @@ export default function Leads() {
 
   // ─── Partner-Ansicht ──────────────────────────────────────────────────────
   if (isPartner) {
+    // All assigned leads (backend already filters to mine)
+    const myLeads = sortLeads(leads.filter(l => l.status === "Neu" && !l.partnerStatus));
+    const termineLeads = sortLeads(leads.filter(l => l.partnerStatus === "termin"));
+    const keinInteresseLeads = sortLeads(leads.filter(l => l.partnerStatus === "kein_interesse"));
+
+    const activeLeads =
+      partnerTab === "leads" ? myLeads :
+      partnerTab === "termine" ? termineLeads :
+      keinInteresseLeads;
+
+    const emptyMessages: Record<string, string> = {
+      leads: "Keine neuen Leads zugewiesen.",
+      termine: "Noch kein Termin gesetzt.",
+      kein_interesse: "Kein Lead als 'Kein Interesse' markiert.",
+    };
+
+    const PartnerLeadTable = ({ rows }: { rows: typeof leads }) => (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader className="bg-muted/30 hover:bg-muted/30">
+            <TableRow>
+              <TableHead className="w-[220px]">Name / Firma</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("nextFollowUp")}>
+                <div className="flex items-center gap-1">Frist <SortIcon col="nextFollowUp" /></div>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("lastContact")}>
+                <div className="flex items-center gap-1">Letzter Kontakt <SortIcon col="lastContact" /></div>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("createdAt")}>
+                <div className="flex items-center gap-1">Erstellt am <SortIcon col="createdAt" /></div>
+              </TableHead>
+              <TableHead className="text-right w-[200px]">Aktionen</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  {emptyMessages[partnerTab]}
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((lead) => (
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedLeadId(lead.id)}
+                >
+                  <TableCell>
+                    <div className="font-medium text-foreground truncate max-w-[180px]">{lead.company || lead.name}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[180px]">{lead.name}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={statusColors[lead.status] || ""}>
+                      {lead.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {lead.lastContact ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de }) : "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {format(parseUTC(lead.createdAt), "dd.MM.yy", { locale: de })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                      {lead.partnerStatus ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                          onClick={e => setPartnerStatus(e, lead.id, null)}
+                          title="Zurück zu Meine Leads"
+                        >
+                          <Undo2 className="w-3 h-3" />
+                          Zurück
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1.5 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 hover:border-emerald-300"
+                            onClick={e => setPartnerStatus(e, lead.id, "termin")}
+                            title="Termin gelegt"
+                          >
+                            <CalendarCheck className="w-3.5 h-3.5" />
+                            Termin gelegt
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1.5 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 hover:border-red-300"
+                            onClick={e => setPartnerStatus(e, lead.id, "kein_interesse")}
+                            title="Kein Interesse"
+                          >
+                            <ThumbsDown className="w-3.5 h-3.5" />
+                            Kein Interesse
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
+
     return (
       <Layout>
         <div className="p-3 sm:p-6 md:p-8 max-w-[1600px] mx-auto">
-          <div className="mb-4 md:mb-8">
+          <div className="mb-4 md:mb-6">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Meine Leads</h1>
             <p className="text-muted-foreground mt-1 text-sm hidden sm:block">Ihre zugewiesenen Verkaufschancen.</p>
           </div>
 
           <div className="bg-card border shadow-sm rounded-xl overflow-hidden flex flex-col">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/30 hover:bg-muted/30">
-                  <TableRow>
-                    <TableHead className="w-[250px]">
-                      <div className="flex items-center gap-1">Name / Firma</div>
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Quelle</TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none hover:text-foreground"
-                      onClick={() => handleSort("nextFollowUp")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Frist <SortIcon col="nextFollowUp" />
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none hover:text-foreground"
-                      onClick={() => handleSort("lastContact")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Letzter Kontakt <SortIcon col="lastContact" />
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none hover:text-foreground"
-                      onClick={() => handleSort("createdAt")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Erstellt am <SortIcon col="createdAt" />
-                      </div>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeads.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                        Keine Leads zugewiesen.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredLeads.map((lead) => (
-                      <TableRow
-                        key={lead.id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setSelectedLeadId(lead.id)}
-                      >
-                        <TableCell>
-                          <div className="font-medium text-foreground truncate max-w-[200px]">{lead.company || lead.name}</div>
-                          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{lead.name}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={statusColors[lead.status] || ""}>
-                            {lead.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">{lead.source}</span>
-                        </TableCell>
-                        <TableCell>
-                          <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {lead.lastContact
-                            ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {format(parseUTC(lead.createdAt), "dd.MM.yy", { locale: de })}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="px-4 pt-4 pb-0 border-b bg-muted/20">
+              <Tabs value={partnerTab} onValueChange={(v) => setPartnerTab(v as typeof partnerTab)}>
+                <TabsList className="bg-background border shadow-sm">
+                  <TabsTrigger value="leads" className="flex gap-2">
+                    Meine Leads
+                    <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-primary/10 text-primary">
+                      {myLeads.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="termine" className="flex gap-2">
+                    <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    Termine
+                    {termineLeads.length > 0 && (
+                      <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-emerald-100 text-emerald-700">
+                        {termineLeads.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="kein_interesse" className="flex gap-2">
+                    <ThumbsDown className="w-3.5 h-3.5 text-red-500" />
+                    Kein Interesse
+                    {keinInteresseLeads.length > 0 && (
+                      <Badge variant="secondary" className="px-1.5 h-5 text-[10px] bg-red-100 text-red-600">
+                        {keinInteresseLeads.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
+            <PartnerLeadTable rows={activeLeads} />
+
             <div className="p-4 border-t bg-muted/10 text-xs text-muted-foreground">
-              <span>{filteredLeads.length} Leads zugewiesen</span>
+              {activeLeads.length} {partnerTab === "leads" ? "offene Leads" : partnerTab === "termine" ? "Termine" : "kein Interesse"}
             </div>
           </div>
         </div>
@@ -342,9 +416,7 @@ export default function Leads() {
                     />
                   </TableHead>
                   <TableHead className="w-[250px]">
-                    <div className="flex items-center gap-1 cursor-pointer hover:text-foreground">
-                      Name / Firma <ArrowUpDown className="w-3 h-3" />
-                    </div>
+                    <div className="flex items-center gap-1">Name / Firma</div>
                   </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Quelle</TableHead>
@@ -353,25 +425,19 @@ export default function Leads() {
                     className="cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("nextFollowUp")}
                   >
-                    <div className="flex items-center gap-1">
-                      Frist <SortIcon col="nextFollowUp" />
-                    </div>
+                    <div className="flex items-center gap-1">Frist <SortIcon col="nextFollowUp" /></div>
                   </TableHead>
                   <TableHead
                     className="cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("lastContact")}
                   >
-                    <div className="flex items-center gap-1">
-                      Letzter Kontakt <SortIcon col="lastContact" />
-                    </div>
+                    <div className="flex items-center gap-1">Letzter Kontakt <SortIcon col="lastContact" /></div>
                   </TableHead>
                   <TableHead
                     className="cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("createdAt")}
                   >
-                    <div className="flex items-center gap-1">
-                      Erstellt am <SortIcon col="createdAt" />
-                    </div>
+                    <div className="flex items-center gap-1">Erstellt am <SortIcon col="createdAt" /></div>
                   </TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
@@ -433,9 +499,7 @@ export default function Leads() {
                           <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {lead.lastContact
-                            ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de })
-                            : "-"}
+                          {lead.lastContact ? format(parseUTC(lead.lastContact), "dd.MM.yy HH:mm", { locale: de }) : "-"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {format(parseUTC(lead.createdAt), "dd.MM.yy", { locale: de })}
@@ -460,15 +524,15 @@ export default function Leads() {
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    onClick={(e) => handleQuickAssign(e, lead.id, marcoUser.id)}
+                                    onClick={(e) => handleQuickAssign(e as any, lead.id, marcoUser.id)}
                                     data-testid={`button-assign-marco-${lead.id}`}
                                   >
                                     <UserCheck className="w-4 h-4 mr-2 text-primary" />
                                     An Marco zuweisen
                                   </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
                                 </>
                               )}
-                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={(e) => handleDelete(e as any, lead.id)}

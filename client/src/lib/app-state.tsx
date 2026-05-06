@@ -24,6 +24,8 @@ export type Activity = {
   updatedAt?: string | null;
 };
 
+export type PartnerStatus = "termin" | "kein_interesse" | null;
+
 export type Lead = {
   id: string;
   name: string;
@@ -39,6 +41,7 @@ export type Lead = {
   website: string;
   address: string;
   notes: string;
+  partnerStatus: PartnerStatus;
   createdAt: string;
 };
 
