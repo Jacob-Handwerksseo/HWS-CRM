@@ -39,6 +39,7 @@ A modern SaaS CRM for lead management, built with React + TypeScript frontend an
 - **User**: id (UUID), username (unique), name, password (bcrypt hash), role (admin|partner, default admin)
 - **Lead**: id (UUID), name, role, company, status (enum), source (text), assignedTo (user UUID), lastContact, nextFollowUp, phone, email, website, address, notes, createdAt
 - **Activity**: id (UUID), leadId (FK), type (comment/system), text, authorId, timestamp, updatedAt
+- **Notification**: id (UUID), userId (FK), leadId (FK), createdAt, seenAt (nullable) — tracks unseen lead assignments for partners
 - **LeadStatus**: Neu, Erstkontakt, Setting, Closing, Wiedervorlage, Verlorener Lead
 - **LeadSource**: Tool-Import, Website Leads, Video-Analyse
 

@@ -18,8 +18,9 @@ interface TopbarProps {
 }
 
 export function Topbar({ onNewLead }: TopbarProps) {
-  const { currentUser, logout, isPartner } = useAppState();
+  const { currentUser, logout, isPartner, notifications } = useAppState();
   const [, navigate] = useLocation();
+  const unseenCount = notifications.length;
 
   return (
     <header className="h-14 md:h-16 border-b bg-background/80 backdrop-blur-md flex items-center justify-between px-3 md:px-6 sticky top-0 z-30">
@@ -35,8 +36,19 @@ export function Topbar({ onNewLead }: TopbarProps) {
           </Button>
         )}
 
-        <Button variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-foreground w-9 h-9">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden md:flex text-muted-foreground hover:text-foreground w-9 h-9 relative"
+          onClick={() => isPartner && navigate("/leads")}
+          data-testid="button-notifications"
+        >
           <Bell className="w-5 h-5" />
+          {isPartner && unseenCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-primary text-primary-foreground rounded-full" data-testid="badge-notif-topbar">
+              {unseenCount > 9 ? "9+" : unseenCount}
+            </span>
+          )}
         </Button>
 
         <DropdownMenu>

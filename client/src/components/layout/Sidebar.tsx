@@ -6,7 +6,8 @@ import { useAppState } from "@/lib/app-state";
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { isPartner } = useAppState();
+  const { isPartner, notifications } = useAppState();
+  const unseenCount = notifications.length;
 
   const navItems = [
     {
@@ -66,6 +67,8 @@ export function Sidebar() {
                   );
                 }
 
+                const showBadge = isPartner && item.href === "/leads" && unseenCount > 0;
+
                 return (
                   <Link key={item.href} href={item.href}>
                     <div
@@ -77,7 +80,12 @@ export function Sidebar() {
                       )}
                     >
                       <item.icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                      {item.label}
+                      <span className="flex-1">{item.label}</span>
+                      {showBadge && (
+                        <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full" data-testid="badge-unseen-count">
+                          {unseenCount > 9 ? "9+" : unseenCount}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 );

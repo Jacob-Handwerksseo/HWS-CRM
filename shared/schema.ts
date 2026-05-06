@@ -104,5 +104,15 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  leadId: varchar("lead_id").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  seenAt: timestamp("seen_at", { mode: "string" }),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+
 export type LeadStatus = "Neu" | "Erstkontakt" | "Setting" | "Closing" | "Wiedervorlage" | "Verlorener Lead";
 export type LeadSource = "Tool-Import" | "Website Leads" | "Video-Analyse";

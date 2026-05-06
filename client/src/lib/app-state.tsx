@@ -47,6 +47,14 @@ export type Lead = {
 
 export type LeadWithActivities = Lead & { activities: Activity[] };
 
+export type Notification = {
+  id: string;
+  userId: string;
+  leadId: string;
+  createdAt: string;
+  seenAt: string | null;
+};
+
 type AppStateContextType = {
   currentUser: User | null;
   isPartner: boolean;
@@ -64,6 +72,10 @@ type AppStateContextType = {
   addActivity: (leadId: string, text: string) => void;
   updateActivity: (leadId: string, activityId: string, text: string) => void;
   deleteActivity: (leadId: string, activityId: string) => void;
+
+  notifications: Notification[];
+  unseenLeadIds: Set<string>;
+  markNotificationSeen: (leadId: string) => void;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -107,6 +119,34 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     queryKey: ["/api/leads"],
     enabled: !!currentUser,
   });
+
+  const { data: notificationsData = [] } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+    enabled: !!currentUser && currentUser?.role === "partner",
+    refetchInterval: 30000,
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/notifications", { credentials: "include" });
+        if (!res.ok) return [];
+        return res.json();
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const unseenLeadIds = new Set(notificationsData.map(n => n.leadId));
+
+  const markNotificationSeen = useCallback((leadId: string) => {
+    fetch("/api/notifications/mark-seen", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId }),
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    });
+  }, [queryClient]);
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, Activity[]>>({});
 
@@ -315,6 +355,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         addActivity,
         updateActivity,
         deleteActivity,
+        notifications: notificationsData,
+        unseenLeadIds,
+        markNotificationSeen,
       }}
     >
       {children}

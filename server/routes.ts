@@ -44,6 +44,13 @@ export async function registerRoutes(
     try {
       const parsed = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead(parsed);
+      // Create notification if directly assigned to a partner
+      if (lead.assignedTo) {
+        const assignee = await storage.getUser(lead.assignedTo);
+        if (assignee && assignee.role === "partner") {
+          await storage.createNotification(assignee.id, lead.id);
+        }
+      }
       res.status(201).json(lead);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -86,8 +93,33 @@ export async function registerRoutes(
         return res.json(updated);
       }
 
+      // Admin path — detect assignment changes to create notifications
+      const existingLead = await storage.getLead(req.params.id);
       const lead = await storage.updateLead(req.params.id, req.body);
       if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      // If assignedTo changed, handle notification cleanup and creation
+      if (
+        existingLead &&
+        "assignedTo" in req.body &&
+        req.body.assignedTo !== existingLead.assignedTo
+      ) {
+        // Clear stale notification for previous assignee (if they were a partner)
+        if (existingLead.assignedTo) {
+          const prevAssignee = await storage.getUser(existingLead.assignedTo);
+          if (prevAssignee && prevAssignee.role === "partner") {
+            await storage.deleteNotification(prevAssignee.id, lead.id);
+          }
+        }
+        // Create notification for the new assignee (if partner)
+        if (req.body.assignedTo) {
+          const assignee = await storage.getUser(req.body.assignedTo);
+          if (assignee && assignee.role === "partner") {
+            await storage.createNotification(assignee.id, lead.id);
+          }
+        }
+      }
+
       res.json(lead);
     } catch (error) {
       console.error("Error updating lead:", error);
@@ -200,10 +232,52 @@ export async function registerRoutes(
     try {
       const { ids, data } = req.body;
       if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ message: "IDs erforderlich" });
+
+      // Handle notifications for bulk-assignment changes
+      if ("assignedTo" in data) {
+        const newAssignee = data.assignedTo ? await storage.getUser(data.assignedTo) : null;
+        const existingLeads = await Promise.all(ids.map(id => storage.getLead(id)));
+        for (const existingLead of existingLeads) {
+          if (!existingLead || existingLead.assignedTo === data.assignedTo) continue;
+          // Clear stale notification for previous assignee (if partner)
+          if (existingLead.assignedTo) {
+            const prevAssignee = await storage.getUser(existingLead.assignedTo);
+            if (prevAssignee && prevAssignee.role === "partner") {
+              await storage.deleteNotification(prevAssignee.id, existingLead.id);
+            }
+          }
+          // Create notification for new assignee (if partner)
+          if (newAssignee && newAssignee.role === "partner") {
+            await storage.createNotification(newAssignee.id, existingLead.id);
+          }
+        }
+      }
+
       const count = await storage.bulkUpdateLeads(ids, data);
       res.json({ success: true, updated: count });
     } catch (error) {
       res.status(500).json({ message: "Bulk-Update fehlgeschlagen" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifs = await storage.getUnseenNotifications(req.session.userId!);
+      res.json(notifs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/mark-seen", requireAuth, async (req, res) => {
+    try {
+      const { leadId } = req.body;
+      if (!leadId) return res.status(400).json({ message: "leadId required" });
+      await storage.markNotificationSeen(req.session.userId!, leadId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification seen" });
     }
   });
 

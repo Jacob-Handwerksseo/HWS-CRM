@@ -112,6 +112,16 @@ export async function runMigrations() {
       ALTER TABLE leads ADD COLUMN IF NOT EXISTS partner_status TEXT;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        lead_id VARCHAR NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        seen_at TIMESTAMP
+      );
+    `);
+
     console.log("[migrate] Datenbanktabellen erfolgreich erstellt/geprüft");
   } catch (error) {
     console.error("[migrate] Fehler bei der Migration:", error);

@@ -1,11 +1,12 @@
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, isNull, and } from "drizzle-orm";
 import { db } from "./db";
 import {
-  users, leads, activities, emailConfigs,
+  users, leads, activities, emailConfigs, notifications,
   type User, type InsertUser,
   type Lead, type InsertLead,
   type Activity, type InsertActivity,
   type EmailConfig, type InsertEmailConfig,
+  type Notification,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -33,6 +34,12 @@ export interface IStorage {
 
   bulkDeleteLeads(ids: string[]): Promise<number>;
   bulkUpdateLeads(ids: string[], data: Partial<InsertLead>): Promise<number>;
+
+  createNotification(userId: string, leadId: string): Promise<Notification>;
+  getUnseenNotifications(userId: string): Promise<Notification[]>;
+  markNotificationSeen(userId: string, leadId: string): Promise<void>;
+  deleteNotification(userId: string, leadId: string): Promise<void>;
+  deleteNotificationsForLead(leadId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -123,6 +130,36 @@ export class DatabaseStorage implements IStorage {
     if (!ids.length) return 0;
     await db.update(leads).set(data).where(inArray(leads.id, ids));
     return ids.length;
+  }
+
+  async createNotification(userId: string, leadId: string): Promise<Notification> {
+    await db.delete(notifications).where(
+      and(eq(notifications.userId, userId), eq(notifications.leadId, leadId))
+    );
+    const [created] = await db.insert(notifications).values({ userId, leadId }).returning();
+    return created;
+  }
+
+  async getUnseenNotifications(userId: string): Promise<Notification[]> {
+    return db.select().from(notifications).where(
+      and(eq(notifications.userId, userId), isNull(notifications.seenAt))
+    );
+  }
+
+  async markNotificationSeen(userId: string, leadId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ seenAt: new Date().toISOString() })
+      .where(and(eq(notifications.userId, userId), eq(notifications.leadId, leadId)));
+  }
+
+  async deleteNotification(userId: string, leadId: string): Promise<void> {
+    await db.delete(notifications).where(
+      and(eq(notifications.userId, userId), eq(notifications.leadId, leadId))
+    );
+  }
+
+  async deleteNotificationsForLead(leadId: string): Promise<void> {
+    await db.delete(notifications).where(eq(notifications.leadId, leadId));
   }
 
   async getEmailConfig(): Promise<EmailConfig | undefined> {

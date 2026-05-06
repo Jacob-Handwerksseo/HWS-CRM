@@ -9,7 +9,8 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ onNewLead }: MobileBottomNavProps) {
   const [location] = useLocation();
-  const { isPartner } = useAppState();
+  const { isPartner, notifications } = useAppState();
+  const unseenCount = notifications.length;
 
   const allNavItems = [
     { href: "/leads", icon: Users, label: "Leads", partnerAllowed: true },
@@ -21,6 +22,7 @@ export function MobileBottomNav({ onNewLead }: MobileBottomNavProps) {
   const renderNavItem = (item: typeof allNavItems[0]) => {
     const isActive = location.startsWith(item.href);
     const isLocked = isPartner && !item.partnerAllowed;
+    const showBadge = isPartner && item.href === "/leads" && unseenCount > 0;
 
     if (isLocked) {
       return (
@@ -37,10 +39,17 @@ export function MobileBottomNav({ onNewLead }: MobileBottomNavProps) {
     return (
       <Link key={item.href} href={item.href}>
         <div className={cn(
-          "flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors cursor-pointer min-w-[56px]",
+          "flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors cursor-pointer min-w-[56px] relative",
           isActive ? "text-primary" : "text-muted-foreground"
         )}>
-          <item.icon className={cn("w-5 h-5", isActive && "text-primary")} />
+          <div className="relative">
+            <item.icon className={cn("w-5 h-5", isActive && "text-primary")} />
+            {showBadge && (
+              <span className="absolute -top-1 -right-1.5 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-primary text-primary-foreground rounded-full" data-testid="badge-mobile-notif">
+                {unseenCount > 9 ? "9+" : unseenCount}
+              </span>
+            )}
+          </div>
           <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
             {item.label}
           </span>

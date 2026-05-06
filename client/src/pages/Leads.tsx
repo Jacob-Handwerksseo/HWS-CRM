@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Leads() {
-  const { leads, currentUser, isPartner, deleteLead, users, updateLeadField } = useAppState();
+  const { leads, currentUser, isPartner, deleteLead, users, updateLeadField, unseenLeadIds, markNotificationSeen } = useAppState();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
@@ -211,16 +211,27 @@ export default function Leads() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredLeads.map((lead) => (
+                    filteredLeads.map((lead) => {
+                      const isUnseen = unseenLeadIds.has(lead.id);
+                      return (
                       <TableRow
                         key={lead.id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setSelectedLeadId(lead.id)}
+                        className={`cursor-pointer hover:bg-muted/50 transition-colors${isUnseen ? " bg-primary/5" : ""}`}
+                        onClick={() => { setSelectedLeadId(lead.id); markNotificationSeen(lead.id); }}
                         data-testid={`row-lead-${lead.id}`}
                       >
                         <TableCell>
-                          <div className="font-medium text-foreground truncate max-w-[180px]">{lead.company || lead.name}</div>
-                          <div className="text-xs text-muted-foreground truncate max-w-[180px]">{lead.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <div className="font-medium text-foreground truncate max-w-[180px]">{lead.company || lead.name}</div>
+                              <div className="text-xs text-muted-foreground truncate max-w-[180px]">{lead.name}</div>
+                            </div>
+                            {isUnseen && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded-sm tracking-wide shrink-0" data-testid={`badge-new-lead-${lead.id}`}>
+                                NEU
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusColors[lead.status] || ""}>
@@ -304,7 +315,8 @@ export default function Leads() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
+                    );
+                    })
                   )}
                 </TableBody>
               </Table>
