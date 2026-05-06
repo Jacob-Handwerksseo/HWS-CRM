@@ -14,7 +14,7 @@ import { LeadDeadline } from "./LeadDeadline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Building2, Mail, Phone, Globe, MapPin, 
-  UserCircle2, Edit3, Trash2
+  UserCircle2, Edit3, Trash2, UserCheck
 } from "lucide-react";
 import { parseUTC } from "@/lib/utils";
 import {
@@ -63,6 +63,7 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
   if (!lead) return null;
 
   const assignedUser = users.find(u => u.id === lead.assignedTo);
+  const marcoUser = users.find(u => u.username === "marco");
   const statusOptions = ["Neu", "Erstkontakt", "Setting", "Closing", "Wiedervorlage", "Verlorener Lead"].map(s => ({ label: s, value: s }));
   const userOptions = [{ label: "Nicht zugewiesen", value: "unassigned" }, ...users.map(u => ({ label: u.name, value: u.id }))];
 
@@ -181,6 +182,19 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                )}
+
+                {!isPartner && marcoUser && lead.assignedTo !== marcoUser.id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-medium text-primary border-primary/30 hover:bg-primary/5 hover:border-primary/60"
+                    onClick={() => updateLeadField(lead.id, "assignedTo", marcoUser.id)}
+                    data-testid="button-assign-marco-drawer"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+                    An Marco zuweisen
+                  </Button>
                 )}
 
                 <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="picker" />

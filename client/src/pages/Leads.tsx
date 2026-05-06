@@ -124,6 +124,14 @@ export default function Leads() {
     }
   };
 
+  const handleQuickAssign = async (e: React.MouseEvent, leadId: string, userId: string) => {
+    e.stopPropagation();
+    await apiRequest("PATCH", `/api/leads/${leadId}`, { assignedTo: userId });
+    await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+  };
+
+  const marcoUser = users.find(u => u.username === "marco");
+
   // ─── Partner-Ansicht ──────────────────────────────────────────────────────
   if (isPartner) {
     return (
@@ -448,6 +456,19 @@ export default function Leads() {
                               <DropdownMenuItem onClick={() => setSelectedLeadId(lead.id)}>
                                 Ansehen & Bearbeiten
                               </DropdownMenuItem>
+                              {marcoUser && lead.assignedTo !== marcoUser.id && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => handleQuickAssign(e, lead.id, marcoUser.id)}
+                                    data-testid={`button-assign-marco-${lead.id}`}
+                                  >
+                                    <UserCheck className="w-4 h-4 mr-2 text-primary" />
+                                    An Marco zuweisen
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={(e) => handleDelete(e as any, lead.id)}
