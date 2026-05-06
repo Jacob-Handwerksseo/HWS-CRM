@@ -38,19 +38,19 @@ export default function Leads() {
   const [partnerStatusFilter, setPartnerStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [sortCol, setSortCol] = useState<"nextFollowUp" | "lastContact" | "createdAt" | null>("createdAt");
+  const [sortCol, setSortCol] = useState<"nextFollowUp" | "lastContact" | "createdAt" | "status" | null>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const handleSort = (col: "nextFollowUp" | "lastContact" | "createdAt") => {
+  const handleSort = (col: "nextFollowUp" | "lastContact" | "createdAt" | "status") => {
     if (sortCol === col) {
       setSortDir(d => d === "asc" ? "desc" : "asc");
     } else {
       setSortCol(col);
-      setSortDir("desc");
+      setSortDir("asc");
     }
   };
 
-  const SortIcon = ({ col }: { col: "nextFollowUp" | "lastContact" | "createdAt" }) => {
+  const SortIcon = ({ col }: { col: "nextFollowUp" | "lastContact" | "createdAt" | "status" }) => {
     if (sortCol !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
     return sortDir === "asc" ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
   };
@@ -77,8 +77,13 @@ export default function Leads() {
     return true;
   }).sort((a, b) => {
     if (!sortCol) return 0;
-    const valA = a[sortCol] ? parseUTC(a[sortCol]!).getTime() : null;
-    const valB = b[sortCol] ? parseUTC(b[sortCol]!).getTime() : null;
+    if (sortCol === "status") {
+      // "Neu" = 0, anything else = 1  →  asc = Neu zuerst
+      const order = (s: string) => s === "Neu" ? 0 : 1;
+      return sortDir === "asc" ? order(a.status) - order(b.status) : order(b.status) - order(a.status);
+    }
+    const valA = a[sortCol] ? parseUTC(a[sortCol] as string).getTime() : null;
+    const valB = b[sortCol] ? parseUTC(b[sortCol] as string).getTime() : null;
     if (valA === null && valB === null) return 0;
     if (valA === null) return 1;
     if (valB === null) return -1;
@@ -182,7 +187,9 @@ export default function Leads() {
                 <TableHeader className="bg-muted/30 hover:bg-muted/30">
                   <TableRow>
                     <TableHead className="w-[220px]">Name / Firma</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("status")}>
+                      <div className="flex items-center gap-1">Status <SortIcon col="status" /></div>
+                    </TableHead>
                     <TableHead>Quelle</TableHead>
                     <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("nextFollowUp")}>
                       <div className="flex items-center gap-1">Frist <SortIcon col="nextFollowUp" /></div>
