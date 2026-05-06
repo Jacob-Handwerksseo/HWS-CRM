@@ -140,8 +140,8 @@ export default function Leads() {
 
   // ─── Partner-Ansicht ──────────────────────────────────────────────────────
   if (isPartner) {
-    // All assigned leads (backend already filters to mine)
-    const myLeads = sortLeads(leads.filter(l => l.status === "Neu" && !l.partnerStatus));
+    // All assigned leads (backend already filters to mine) — show regardless of status
+    const myLeads = sortLeads(leads.filter(l => !l.partnerStatus));
     const termineLeads = sortLeads(leads.filter(l => l.partnerStatus === "termin"));
     const keinInteresseLeads = sortLeads(leads.filter(l => l.partnerStatus === "kein_interesse"));
 
@@ -194,9 +194,15 @@ export default function Leads() {
                     <div className="text-xs text-muted-foreground truncate max-w-[180px]">{lead.name}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={statusColors[lead.status] || ""}>
-                      {lead.status}
-                    </Badge>
+                    {lead.status === "Neu" ? (
+                      <Badge variant="outline" className={statusColors["Neu"]}>
+                        Neu
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                        In Bearbeitung
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <LeadDeadline leadId={lead.id} deadline={lead.nextFollowUp} variant="badge" />
