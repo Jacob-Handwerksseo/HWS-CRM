@@ -77,6 +77,10 @@ export async function registerRoutes(
         if ("nextFollowUp" in req.body) patch.nextFollowUp = req.body.nextFollowUp;
         if ("partnerStatus" in req.body) patch.partnerStatus = req.body.partnerStatus;
         if (req.body.status !== undefined) patch.status = req.body.status;
+        // Auto-advance: Neu → Erstkontakt on any partner interaction (except explicit status set)
+        if (lead.status === "Neu" && !("status" in req.body)) {
+          patch.status = "Erstkontakt";
+        }
         const updated = await storage.updateLead(req.params.id, patch);
         if (!updated) return res.status(404).json({ message: "Lead not found" });
         return res.json(updated);

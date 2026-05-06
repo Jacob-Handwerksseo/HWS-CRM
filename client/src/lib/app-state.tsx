@@ -244,7 +244,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         if (!old) return old;
         return old.map(l =>
           l.id === newActivity.leadId
-            ? { ...l, lastContact: newActivity.timestamp }
+            ? { ...l, lastContact: newActivity.timestamp, status: l.status === "Neu" ? "Erstkontakt" as any : l.status }
             : l
         );
       });
