@@ -72,6 +72,10 @@ export async function registerRoutes(
         const patch: Record<string, any> = {};
         if ("nextFollowUp" in req.body) patch.nextFollowUp = req.body.nextFollowUp;
         if ("partnerStatus" in req.body) patch.partnerStatus = req.body.partnerStatus;
+        // Auto-advance status: Neu → Erstkontakt when partner interacts with lead
+        if (lead.status === "Neu" && "nextFollowUp" in req.body) {
+          patch.status = "Erstkontakt";
+        }
         const updated = await storage.updateLead(req.params.id, patch);
         if (!updated) return res.status(404).json({ message: "Lead not found" });
         return res.json(updated);
@@ -133,7 +137,13 @@ export async function registerRoutes(
       });
       const activity = await storage.createActivity(parsed);
       if (parsed.type === "comment") {
-        await storage.updateLead(req.params.id, { lastContact: new Date() });
+        const commentLead = await storage.getLead(req.params.id);
+        const commentPatch: Record<string, any> = { lastContact: new Date() };
+        // Auto-advance status: Neu → Erstkontakt when partner writes a comment
+        if (commentLead && commentLead.status === "Neu") {
+          commentPatch.status = "Erstkontakt";
+        }
+        await storage.updateLead(req.params.id, commentPatch);
       }
       res.status(201).json(activity);
     } catch (error) {
