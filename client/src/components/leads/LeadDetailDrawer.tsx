@@ -14,7 +14,8 @@ import { LeadDeadline } from "./LeadDeadline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Building2, Mail, Phone, Globe, MapPin, 
-  UserCircle2, Edit3, Trash2, UserCheck
+  UserCircle2, Edit3, Trash2, UserCheck,
+  CalendarCheck, ThumbsDown, Undo2
 } from "lucide-react";
 import { parseUTC } from "@/lib/utils";
 import {
@@ -248,6 +249,76 @@ export function LeadDetailDrawer({ leadId, open, onClose }: LeadDetailDrawerProp
             )}
           </div>
         </div>
+
+        {/* Partner Action Bar */}
+        {isPartner && (
+          <div className={`px-6 py-4 border-b flex items-center gap-3 ${
+            lead.partnerStatus === "termin"
+              ? "bg-emerald-50 border-emerald-200"
+              : lead.partnerStatus === "kein_interesse"
+              ? "bg-red-50 border-red-200"
+              : "bg-muted/30"
+          }`}>
+            {lead.partnerStatus === "termin" && (
+              <>
+                <div className="flex-1 flex items-center gap-2 text-emerald-700 font-medium">
+                  <CalendarCheck className="w-5 h-5" />
+                  Termin gelegt
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => updateLeadField(lead.id, "partnerStatus", null)}
+                >
+                  <Undo2 className="w-4 h-4" />
+                  Zurücksetzen
+                </Button>
+              </>
+            )}
+            {lead.partnerStatus === "kein_interesse" && (
+              <>
+                <div className="flex-1 flex items-center gap-2 text-red-600 font-medium">
+                  <ThumbsDown className="w-5 h-5" />
+                  Kein Interesse
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => updateLeadField(lead.id, "partnerStatus", null)}
+                >
+                  <Undo2 className="w-4 h-4" />
+                  Zurücksetzen
+                </Button>
+              </>
+            )}
+            {!lead.partnerStatus && (
+              <>
+                <p className="text-sm text-muted-foreground flex-1">Was ist das Ergebnis?</p>
+                <Button
+                  size="sm"
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                  onClick={() => updateLeadField(lead.id, "partnerStatus", "termin")}
+                  data-testid="button-termin-gelegt"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  Termin gelegt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                  onClick={() => updateLeadField(lead.id, "partnerStatus", "kein_interesse")}
+                  data-testid="button-kein-interesse"
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                  Kein Interesse
+                </Button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Content Section */}
         <ScrollArea className="flex-1">
