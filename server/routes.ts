@@ -60,17 +60,15 @@ export async function registerRoutes(
       const isPartner = req.session.userRole === "partner";
 
       if (isPartner) {
-        // Verify lead belongs to partner
         const lead = await storage.getLead(req.params.id);
         if (!lead || lead.assignedTo !== req.session.userId) {
           return res.status(403).json({ message: "Keine Berechtigung" });
         }
-        // Only allow nextFollowUp field for partners
-        const { nextFollowUp } = req.body;
-        if (nextFollowUp === undefined && Object.keys(req.body).length > 0) {
-          return res.status(403).json({ message: "Keine Berechtigung für dieses Feld" });
+        const keys = Object.keys(req.body);
+        if (keys.length === 0 || !keys.includes("nextFollowUp") || keys.some(k => k !== "nextFollowUp")) {
+          return res.status(400).json({ message: "Nur nextFollowUp darf aktualisiert werden" });
         }
-        const updated = await storage.updateLead(req.params.id, { nextFollowUp: nextFollowUp ?? null });
+        const updated = await storage.updateLead(req.params.id, { nextFollowUp: req.body.nextFollowUp });
         if (!updated) return res.status(404).json({ message: "Lead not found" });
         return res.json(updated);
       }
